@@ -43,6 +43,21 @@ class Program
             {
                 Console.WriteLine($"Message from {username}: {message}");
                 
+                if (message == "/Logout")
+                {
+                
+                    // Close the socket associated with the client
+                    handler.Shutdown(SocketShutdown.Both);
+                    handler.Close();
+
+                    // Remove the client from the list
+                    clients.Remove(handler);
+                    
+                    await ServerMessage(username, "has left the chat", handler);
+                        
+                    break;
+                }
+
                 // Broadcast message to all clients except the sender
                 foreach (var client in clients)
                 {
@@ -53,6 +68,19 @@ class Program
                         await client.SendAsync(responseByte, SocketFlags.None);
                     }
                 }
+            }
+        }
+    }
+
+    static async Task ServerMessage(string username, string message,Socket handler)
+    {
+        foreach (var client in clients)
+        {
+            if (client != handler)
+            {
+                var response = $"Server: {username} {message}";
+                var responseByte = Encoding.UTF8.GetBytes(response);
+                await client.SendAsync(responseByte, SocketFlags.None);
             }
         }
     }
