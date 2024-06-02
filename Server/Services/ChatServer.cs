@@ -120,7 +120,7 @@ namespace Server.Services
                             }
                             else
                             {
-                                await SendMessageToRoom(username, message, client.RoomName);
+                                await SendMessageToRoom(parts[0], parts[1], client.RoomName);
                             }
                             break;
                     }
@@ -226,13 +226,24 @@ namespace Server.Services
             var room = rooms.FirstOrDefault(r => r.Name == roomName);
             if (room != null)
             {
-                foreach (var member in room.Members)
+                if (username == "server")
                 {
-                    if (member.Username != username)
+                    foreach (var member in room.Members)
                     {
-                        var response = $"{username}: {message}";
-                        var responseByte = Encoding.UTF8.GetBytes(response);
-                        await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                        if (member.Username != username)
+                        {
+                            var response = $"{username}: {message}";
+                            var responseByte = Encoding.UTF8.GetBytes(response);
+                            await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                        }
+                    }
+                    
+                }
+                else
+                {
+                    if (roomName == "Main")
+                    {
+                        ServerPrivateMessage(clients.FirstOrDefault(p => username == p.Username),"Cannot Massage In Room Main");
                     }
                 }
             }
@@ -244,6 +255,10 @@ namespace Server.Services
 
         private async Task ServerPrivateMessage(IClient client, string message)
         {
+            if (client == null)
+            {
+                Console.WriteLine("error line 256");
+            }
             var response = $"Server: {message}";
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
