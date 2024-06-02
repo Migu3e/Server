@@ -38,6 +38,7 @@ namespace Server.Services
                 IClient client = new Client(handler, username, defaultRoom.Name);
                 defaultRoom.AddClientToRoom(client);
                 clients.Add(client);
+                await UpdatedClientList(client);
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
                 await SendMessageToRoom("Server", $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
@@ -49,7 +50,6 @@ namespace Server.Services
         private async Task HandleClient(IClient client)
         {
             Socket handler = client.ClientSocket;
-
             while (true)
             {
                 var buffer = new byte[1024];
@@ -68,7 +68,6 @@ namespace Server.Services
 
                 var username = parts[0];
                 var message = parts[1];
-
                 if (!string.IsNullOrEmpty(message))
                 {
                     switch (message.ToLower())
@@ -120,7 +119,8 @@ namespace Server.Services
                             }
                             else
                             {
-                                await SendMessageToRoom(parts[0], parts[1], client.RoomName);
+                                await SendMessageToRoom(client.Username,message,client.RoomName);
+                                
                             }
                             break;
                     }
@@ -148,7 +148,17 @@ namespace Server.Services
             }
             await ServerPrivateMessage(client, listOfOnlineClients);
         }
+        private async Task UpdatedClientList(IClient client)
+        {
+            string listOfOnlineClients = "The list of online clients are has changed\n";
+            foreach (var currClient in clients)
+            {
+                listOfOnlineClients += $"<--> {currClient.Username}" + (currClient.Username == client.Username ? " (Just Joined)\n" : "\n");
+            }
+            await PrintToAll(client, listOfOnlineClients);
+        }
 
+        
         private async Task HandleCreateRoom(IClient client, string message)
         {
             var parts = message.Split(' ');
@@ -158,6 +168,7 @@ namespace Server.Services
                 var room = new Room(roomName);
                 rooms.Add(room);
                 Console.WriteLine($"Room {roomName} was created by {client.Username}");
+                await PrintToAll(client,$"Room {roomName} was created by {client.Username}");
             }
         }
 
@@ -211,22 +222,45 @@ namespace Server.Services
             string message = "";
             foreach (var room in rooms)
             {
-                message += $"\nRoom {room.Name}:\n";
+                message += $"\nRoom {room.Name}";
                 foreach (var member in room.Members)
                 {
-                    message += $"\n| - <{member.Username}>" + (member.Username == client.Username ? " (you)" : "");
+                    message += $"\n| <{member.Username}>" + (member.Username == client.Username ? " (you)" : "");
                 }
                 message += "\n";
             }
             await ServerPrivateMessage(client, message);
         }
 
+        private async Task PrintToAll(IClient client,string massege)
+        {
+            foreach (var member in clients)
+            {
+                if (client.Username == member.Username)
+                {
+                    var response = $"Server: {massege}";
+                    var responseByte = Encoding.UTF8.GetBytes(response);
+                    await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                }
+                else
+                {
+                    var response = $"Server: {massege}";
+                    var responseByte = Encoding.UTF8.GetBytes(response);
+                    await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                }
+                
+            }
+        }
         private async Task SendMessageToRoom(string username, string message, string roomName)
         {
             var room = rooms.FirstOrDefault(r => r.Name == roomName);
             if (room != null)
             {
-                if (username == "server")
+                if (roomName == "Main")
+                {
+                    ServerPrivateMessage(clients.FirstOrDefault(p => username == p.Username),"Cannot Massage In Room Main");
+                }
+                else
                 {
                     foreach (var member in room.Members)
                     {
@@ -237,15 +271,8 @@ namespace Server.Services
                             await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                         }
                     }
-                    
                 }
-                else
-                {
-                    if (roomName == "Main")
-                    {
-                        ServerPrivateMessage(clients.FirstOrDefault(p => username == p.Username),"Cannot Massage In Room Main");
-                    }
-                }
+                
             }
             else
             {
@@ -255,10 +282,7 @@ namespace Server.Services
 
         private async Task ServerPrivateMessage(IClient client, string message)
         {
-            if (client == null)
-            {
-                Console.WriteLine("error line 256");
-            }
+
             var response = $"Server: {message}";
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
