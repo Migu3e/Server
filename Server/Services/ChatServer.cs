@@ -38,18 +38,19 @@ namespace Server.Services
                 IClient client = new Client(handler, username, defaultRoom.Name);
                 defaultRoom.AddClientToRoom(client);
                 clients.Add(client);
+                await UpdatedClientList(client);
+                await CreatePrivateChats(client); // Add this line to create private chats for the new client
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
                 await SendMessageToRoom("Server", $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
                 _ = Task.Run(() => HandleClient(client));
-                
             }
+
         }
 
         private async Task HandleClient(IClient client)
         {
             Socket handler = client.ClientSocket;
-
             while (true)
             {
                 var buffer = new byte[1024];
@@ -68,22 +69,21 @@ namespace Server.Services
 
                 var username = parts[0];
                 var message = parts[1];
-
                 if (!string.IsNullOrEmpty(message))
                 {
                     switch (message.ToLower())
                     {
                         case "/help":
-                            await SendPrivateMessage(client, "The commands are:\n" +
-                                                             "/list - Display the connected users\n" +
-                                                             "/logout - Disconnect from the server\n" +
-                                                             "/croom <roomname> - Create a new room with the specified name\n" +
-                                                             "/jroom <roomname> - Join an existing room with the specified name\n" +
-                                                             "/iroom <username> <roomname> - Invite a user to a specified room\n" +
-                                                             "/leave - Leave the current room and return to the main room\n" +
-                                                             "/list rooms - List all rooms and their members\n" +
-                                                             "/whisper <username> <message> - Send a private message to a specific user\n" +
-                                                             "/help - Display this list of commands");
+                            await ServerPrivateMessage(client, "The commands are:\n" +
+                                                               "/list - Display the connected users\n" +
+                                                               "/logout - Disconnect from the server\n" +
+                                                               "/croom <roomname> - Create a new room with the specified name\n" +
+                                                               "/jroom <roomname> - Join an existing room with the specified name\n" +
+                                                               "/iroom <username> <roomname> - Invite a user to a specified room\n" +
+                                                               "/leave - Leave the current room and return to the main room\n" +
+                                                               "/list rooms - List all rooms and their members\n" +
+                                                               "/private <username> enters the private chat with the user selected\n" +
+                                                               "/help - Display this list of commands");
                             return;
                         case "/logout":
                             await HandleLogout(client, username);
@@ -114,13 +114,14 @@ namespace Server.Services
                             {
                                 await PrintRooms(client);
                             }
-                            else if (message.StartsWith("/whisper"))
+                            else if (message.StartsWith("/private"))
                             {
-                                await SendPrivateMessage(client, message);
+                                await HandleJoinPrivateRoom(client, message);
                             }
                             else
                             {
-                                await SendMessageToRoom(username, message, client.RoomName);
+                                await SendMessageToRoom(client.Username,message,client.RoomName);
+                                
                             }
                             break;
                     }
@@ -148,7 +149,32 @@ namespace Server.Services
             }
             await ServerPrivateMessage(client, listOfOnlineClients);
         }
+        private async Task UpdatedClientList(IClient client)
+        {
+            string listOfOnlineClients = "The list of online clients are has changed\n";
+            foreach (var currClient in clients)
+            {
+                listOfOnlineClients += $"<--> {currClient.Username}" + (currClient.Username == client.Username ? " (Just Joined)\n" : "\n");
+            }
+            await PrintToAll(client, listOfOnlineClients);
+        }
 
+        private async Task CreatePrivateChats(IClient newClient)
+        {
+            foreach (var existingClient in clients)
+            {
+                if (existingClient != newClient)
+                {
+                    string chatName = $"|private| {existingClient.Username}-{newClient.Username}";
+                    IRoom privateChat = new Room(chatName);
+                    rooms.Add(privateChat);
+
+
+                    Console.WriteLine($"Private chat '{chatName}' created between {existingClient.Username} and {newClient.Username}");
+                }
+            }
+        }
+        
         private async Task HandleCreateRoom(IClient client, string message)
         {
             var parts = message.Split(' ');
@@ -158,6 +184,7 @@ namespace Server.Services
                 var room = new Room(roomName);
                 rooms.Add(room);
                 Console.WriteLine($"Room {roomName} was created by {client.Username}");
+                await PrintToAll(client,$"Room {roomName} was created by {client.Username}");
             }
         }
 
@@ -165,21 +192,28 @@ namespace Server.Services
         {
             var parts = message.Split(' ');
             var room = rooms.FirstOrDefault(r => r.Name == parts[1]);
-            if (room != null)
+            if (room.Name.Contains("|private|"))
             {
-                if (parts.Length == 2)
-                {
-                    rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
-                    Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
-                    rooms.FirstOrDefault(r => r.Name == parts[1]).AddClientToRoom(client);
-                    client.RoomName = parts[1];
-                    Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
-                    await SendMessageToRoom("Server", $"{client.Username} has joined the room {parts[1]}", parts[1]);
-                }
+                ServerPrivateMessage(client, "cannot enter private room");
             }
             else
             {
-                await ServerPrivateMessage(client, $"Room {parts[1]} doesn't exist");
+                if (room != null)
+                {
+                    if (parts.Length == 2)
+                    {
+                        rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
+                        Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
+                        rooms.FirstOrDefault(r => r.Name == parts[1]).AddClientToRoom(client);
+                        client.RoomName = parts[1];
+                        Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
+                        await SendMessageToRoom("Server", $"{client.Username} has joined the room {parts[1]}", parts[1]);
+                    }
+                }
+                else
+                {
+                    await ServerPrivateMessage(client, $"Room {parts[1]} doesn't exist");
+                }
             }
         }
 
@@ -211,30 +245,64 @@ namespace Server.Services
             string message = "";
             foreach (var room in rooms)
             {
-                message += $"\nRoom {room.Name}:\n";
-                foreach (var member in room.Members)
+                if (room.Name.StartsWith("|private|"))
                 {
-                    message += $"\n| - <{member.Username}>" + (member.Username == client.Username ? " (you)" : "");
+                    
                 }
-                message += "\n";
+                else
+                {
+                    message += $"\nRoom {room.Name}";
+                    foreach (var member in room.Members)
+                    {
+                        message += $"\n| <{member.Username}>" + (member.Username == client.Username ? " (you)" : "");
+                    }
+                    message += "\n";
+                }
             }
             await ServerPrivateMessage(client, message);
         }
 
+        private async Task PrintToAll(IClient client,string massege)
+        {
+            foreach (var member in clients)
+            {
+                if (client.Username == member.Username)
+                {
+                    var response = $"Server: {massege}";
+                    var responseByte = Encoding.UTF8.GetBytes(response);
+                    await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                }
+                else
+                {
+                    var response = $"Server: {massege}";
+                    var responseByte = Encoding.UTF8.GetBytes(response);
+                    await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                }
+                
+            }
+        }
         private async Task SendMessageToRoom(string username, string message, string roomName)
         {
             var room = rooms.FirstOrDefault(r => r.Name == roomName);
             if (room != null)
             {
-                foreach (var member in room.Members)
+                if (roomName == "Main")
                 {
-                    if (member.Username != username)
+                    ServerPrivateMessage(clients.FirstOrDefault(p => username == p.Username),"Cannot Massage In Room Main");
+                }
+                else
+                {
+                    foreach (var member in room.Members)
                     {
-                        var response = $"{username}: {message}";
-                        var responseByte = Encoding.UTF8.GetBytes(response);
-                        await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                        if (member.Username != username)
+                        {
+                            var response = $"{username}: {message}";
+                            var responseByte = Encoding.UTF8.GetBytes(response);
+                            await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+                        }
                     }
                 }
+                
             }
             else
             {
@@ -242,21 +310,47 @@ namespace Server.Services
             }
         }
 
+        private async Task HandleJoinPrivateRoom(IClient client, string message)
+        {
+            
+            var parts = message.Split(' ');
+            if (client.Username == parts[1])
+            {
+                await ServerPrivateMessage(client, $"Error Entering the room");
+            }
+            else
+            {
+                
+                var room = rooms.FirstOrDefault(r => r.Name.Contains(parts[1])&&r.Name.Contains(client.Username));
+                if (room != null)
+                {
+                    if (parts.Length == 2)
+                    {
+                        rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
+                        Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
+                        rooms.FirstOrDefault(r => r.Name.Contains(parts[1])&&r.Name.Contains(client.Username)).AddClientToRoom(client);
+                        client.RoomName = rooms.FirstOrDefault(r => r.Name.Contains(parts[1])&&r.Name.Contains(client.Username)).Name;
+                        Console.WriteLine($"Client {client.Username} has joined private room {client.RoomName}");
+                        await SendMessageToRoom("Server", $"{client.Username} has joined the private room {client.RoomName}",client.RoomName);
+                    }
+                }
+                else
+                {
+                    await ServerPrivateMessage(client, $"Room {parts[1]} doesn't exist");
+                }
+            }
+
+        }
+
         private async Task ServerPrivateMessage(IClient client, string message)
         {
+
             var response = $"Server: {message}";
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
 
-        private async Task SendPrivateMessage(IClient client, string message)
-        {
-            var parts = message.Split(' ');
-            var receiver = clients.FirstOrDefault(r => r.Username == parts[1]);
-            var response = $"{client.Username} (whisper): {message}";
-            var responseByte = Encoding.UTF8.GetBytes(response);
-            await ServerPrivateMessage(receiver, parts[2]);
-        }
+
 
     }
 }
