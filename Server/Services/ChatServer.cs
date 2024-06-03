@@ -312,6 +312,7 @@ namespace Server.Services
 
         private async Task HandleJoinPrivateRoom(IClient client, string message)
         {
+            
             var parts = message.Split(' ');
             if (client.Username == parts[1])
             {
@@ -319,6 +320,7 @@ namespace Server.Services
             }
             else
             {
+                
                 var room = rooms.FirstOrDefault(r => r.Name.Contains(parts[1])&&r.Name.Contains(client.Username));
                 if (room != null)
                 {
