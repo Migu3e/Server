@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text;
+using Server.Const;
 using Server.Interfaces;
 
 
@@ -45,16 +46,7 @@ public class ClientHandler : ICleintHandler
                 switch (message.ToLower())
                 {
                     case "/help":
-                        await _chatServer.ServerPrivateMessage(client, "The commands are:\n" +
-                                                                      "/list - Display the connected users\n" +
-                                                                      "/logout - Disconnect from the server\n" +
-                                                                      "/croom <roomname> - Create a new room with the specified name\n" +
-                                                                      "/jroom <roomname> - Join an existing room with the specified name\n" +
-                                                                      "/iroom <username> <roomname> - Invite a user to a specified room\n" +
-                                                                      "/leave - Leave the current room and return to the main room\n" +
-                                                                      "/list rooms - List all rooms and their members\n" +
-                                                                      "/private <username> enters the private chat with the user selected\n" +
-                                                                      "/help - Display this list of commands");
+                        await _chatServer.ServerPrivateMessage(client,ConstMasseges.HelpMessage);
                         return;
                     case "/logout":
                         await HandleLogout(client, username);
@@ -102,7 +94,7 @@ public class ClientHandler : ICleintHandler
 
     public async Task HandleLogout(IClient client, string username)
     {
-        await _chatServer.ServerPrivateMessage(client, "You have disconnected");
+        await _chatServer.ServerPrivateMessage(client,ConstMasseges.DisconnectedMassege);
         await _roomServices.SendMessageToRoom(username, "has left the chat", client.RoomName);
         Console.WriteLine($"Server - {username} has disconnected");
         _chatServer.clients.Remove(client);
@@ -113,7 +105,7 @@ public class ClientHandler : ICleintHandler
 
     public async Task SendClientList(IClient client)
     {
-        string listOfOnlineClients = "The list of online clients are:";
+        string listOfOnlineClients = ConstMasseges.ListOfOnlineClientsAre;
         foreach (var currClient in _chatServer.clients)
         {
             listOfOnlineClients += $"\n<--> {currClient.Username}" + (currClient.Username == client.Username ? " (you)" : "");
@@ -123,7 +115,7 @@ public class ClientHandler : ICleintHandler
 
     public async Task UpdatedClientList(IClient client)
     {
-        string listOfOnlineClients = "The list of online clients are has changed\n";
+        string listOfOnlineClients = ConstMasseges.ListOfOnlineClientsChanges;
         foreach (var currClient in _chatServer.clients)
         {
             listOfOnlineClients += $"<--> {currClient.Username}" + (currClient.Username == client.Username ? " (Just Joined)\n" : "\n");

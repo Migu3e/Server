@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Server.Const;
 using Server.Interfaces;
 using Server.Models;
 
@@ -43,7 +44,7 @@ namespace Server.Services
             using Socket server = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             server.Bind(ipEndPoint);
             server.Listen();
-            Console.WriteLine("Server has started listening on port 1234");
+            Console.WriteLine(ConstMasseges.PortListening);
 
             IRoom defaultRoom = new Room("Main");
             rooms.Add(defaultRoom);
