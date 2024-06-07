@@ -19,76 +19,85 @@ public class ClientHandler : ICleintHandler
     private IRoomServices _roomServices;
     private IPrivateChatHandler _privateChatHandler;
     
-
     public async Task HandleClient(IClient client)
+{
+    Socket handler = client.ClientSocket;
+    while (true)
     {
-        Socket handler = client.ClientSocket;
-        while (true)
+        var buffer = new byte[1024];
+        var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
+        if (received == 0)
         {
-            var buffer = new byte[1024];
-            var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
-            if (received == 0)
-            {
-                break;
-            }
+            break;
+        }
 
-            var receivedString = Encoding.UTF8.GetString(buffer, 0, received);
-            var parts = receivedString.Split('|');
-            if (parts.Length < 2)
-            {
-                continue;
-            }
+        var receivedString = Encoding.UTF8.GetString(buffer, 0, received);
+        var parts = receivedString.Split('|');
+        if (parts.Length < 2)
+        {
+            continue;
+        }
 
-            var username = parts[0];
-            var message = parts[1];
-            if (!string.IsNullOrEmpty(message))
-            {
-                switch (message.ToLower())
-                {
-                    case "/help":
-                        await _chatServer.ServerPrivateMessage(client,ConstMasseges.HelpMessage);
-                        return;
-                    case "/logout":
-                        await HandleLogout(client, username);
-                        return;
+        var username = parts[0];
+        var message = parts[1];
+        if (!string.IsNullOrEmpty(message))
+        {
+            await HandleMessage(client, username, message);
+        }
+    }
+}
 
-                    case "/list":
-                        await SendClientList(client);
-                        break;
+    public async Task HandleMessage(IClient client, string username, string message)
+{
+    switch (message.ToLower())
+    {
+        case "/help":
+            await _chatServer.ServerPrivateMessage(client, ConstMasseges.HelpMessage);
+            break;
 
-                    default:
-                        if (message.StartsWith("/croom"))
-                        {
-                            await _roomServices.HandleCreateRoom(client, message);
-                        }
-                        else if (message.StartsWith("/jroom"))
-                        {
-                            await _roomServices.HandleJoinRoom(client, message);
-                        }
-                        else if (message.StartsWith("/iroom"))
-                        {
-                            await _roomServices.HandleInviteRoom(client, message);
-                        }
-                        else if (message.StartsWith("/leave"))
-                        {
-                            await _roomServices.LeaveRoom(client);
-                        }
-                        else if (message.StartsWith("/list rooms"))
-                        {
-                            await _roomServices.PrintRooms(client);
-                        }
-                        else if (message.StartsWith("/private"))
-                        {
-                            await _privateChatHandler.HandleJoinPrivateRoom(client, message);
-                        }
-                        else
-                        {
-                            await _roomServices.SendMessageToRoom(client.Username,message,client.RoomName);
-                                
-                        }
-                        break;
-                }
-            }
+        case "/logout":
+            await HandleLogout(client, username);
+            break;
+
+        case "/list":
+            await SendClientList(client);
+            break;
+
+        default:
+            await HandleComplexMessage(client, username, message);
+            break;
+    }
+}
+
+    public async Task HandleComplexMessage(IClient client, string username, string message)
+    {
+        if (message.StartsWith("/croom"))
+        {
+            await _roomServices.HandleCreateRoom(client, message);
+        }
+        else if (message.StartsWith("/jroom"))
+        {
+            await _roomServices.HandleJoinRoom(client, message);
+        }
+        else if (message.StartsWith("/iroom"))
+        {
+            await _roomServices.HandleInviteRoom(client, message);
+        }
+        else if (message.StartsWith("/leave"))
+        {
+            await _roomServices.LeaveRoom(client);
+        }
+        else if (message.StartsWith("/list rooms"))
+        {
+            await _roomServices.PrintRooms(client);
+        }
+        else if (message.StartsWith("/private"))
+        {
+            await _privateChatHandler.HandleJoinPrivateRoom(client, message);
+        }
+        else
+        {
+            await _roomServices.SendMessageToRoom(client.Username, message, client.RoomName);
         }
     }
 
@@ -96,7 +105,7 @@ public class ClientHandler : ICleintHandler
     {
         await _chatServer.ServerPrivateMessage(client,ConstMasseges.DisconnectedMassege);
         await _roomServices.SendMessageToRoom(username, "has left the chat", client.RoomName);
-        Console.WriteLine($"Server - {username} has disconnected");
+        Console.WriteLine($"{ConstMasseges.ServerConst} - {username} has disconnected");
         _chatServer.clients.Remove(client);
         await _roomServices.LeaveRoom(client);
         client.ClientSocket.Shutdown(SocketShutdown.Both);

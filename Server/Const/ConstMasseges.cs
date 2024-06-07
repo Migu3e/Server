@@ -19,6 +19,9 @@ public class ConstMasseges
     
     public const string ListOfOnlineClientsAre = "The List Of Online Clients Are:";
     public const string ListOfOnlineClientsChanges = "The list of online clients are has changed\n";
+    
+    public const string ServerConst = "Server";
+
 
     
 

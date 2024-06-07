@@ -1,68 +1,72 @@
+// File: Server/Services/PrivateChatHandler.cs
+
 using Server.Interfaces;
 using Server.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace Server.Services;
-
-public class PrivateChatHandler : IPrivateChatHandler
+namespace Server.Services
 {
-    private readonly IChatServer _chatServer;
-    private readonly IRoomServices _roomServices;
-    private readonly IPrivateChatHandler _privateChatHandler;
-
-
-    public PrivateChatHandler(IChatServer server,IRoomServices roomServices)
+    public class PrivateChatHandler : IPrivateChatHandler
     {
-        _chatServer = server;
-        _roomServices = roomServices;
-    }
+        private readonly IChatServer _chatServer;
+        private readonly IRoomServices _roomServices;
 
-    public async Task CreatePrivateChats(IClient newClient)
-    {
-        foreach (var existingClient in _chatServer.clients)
+        public PrivateChatHandler(IChatServer server, IRoomServices roomServices)
         {
-            if (existingClient != newClient)
+            _chatServer = server;
+            _roomServices = roomServices;
+        }
+
+        public async Task CreatePrivateChats(IClient newClient)
+        {
+            foreach (var existingClient in _chatServer.clients)
             {
-                string chatName = $"|private| {existingClient.Username}-{newClient.Username}";
-                IRoom privateChat = new Room(chatName);
-                _chatServer.rooms.Add(privateChat);
-
-
-                Console.WriteLine($"Private chat '{chatName}' created between {existingClient.Username} and {newClient.Username}");
+                if (existingClient != newClient)
+                {
+                    string chatName = $"|private|.{existingClient.Username}.-.{newClient.Username}.";
+                    IRoom privateChat = new Room(chatName);
+                    _chatServer.rooms.Add(privateChat);
+                    Console.WriteLine($"Private chat '{chatName}' created between {existingClient.Username} and {newClient.Username}");
+                }
             }
         }
-    }
 
+        public async Task HandleJoinPrivateRoom(IClient client, string message)
+        {
+            var parts = message.Split(' ');
+            if (parts.Length < 2)
+            {
+                await _chatServer.ServerPrivateMessage(client, "Invalid message format.");
+                return;
+            }
 
-    public async Task HandleJoinPrivateRoom(IClient client, string message)
-    {
-            
-        var parts = message.Split(' ');
-        if (client.Username == parts[1])
-        {
-            await _chatServer.ServerPrivateMessage(client, $"Error Entering the room");
-        }
-        else
-        {
-                
-            var room = _chatServer.rooms.FirstOrDefault(r => r.Name.Contains(parts[1])&&r.Name.Contains(client.Username));
+            string targetUsername = parts[1];
+            if (client.Username == targetUsername)
+            {
+                await _chatServer.ServerPrivateMessage(client, "Error: Cannot join a private room with yourself.");
+                return;
+            }
+
+            var room = _chatServer.rooms.FirstOrDefault(r => r.Name.Contains($".{targetUsername}.") && r.Name.Contains($".{client.Username}."));
             if (room != null)
             {
-                if (parts.Length == 2)
+                var currentRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName);
+                if (currentRoom != null)
                 {
-                    _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
+                    currentRoom.RemoveClientFromRoom(client);
                     Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
-                    _chatServer.rooms.FirstOrDefault(r => r.Name.Contains(parts[1])&&r.Name.Contains(client.Username)).AddClientToRoom(client);
-                    client.RoomName = _chatServer.rooms.FirstOrDefault(r => r.Name.Contains(parts[1])&&r.Name.Contains(client.Username)).Name;
-                    Console.WriteLine($"Client {client.Username} has joined private room {client.RoomName}");
-                    await _roomServices.SendMessageToRoom("Server", $"{client.Username} has joined the private room {client.RoomName}",client.RoomName);
                 }
+
+                room.AddClientToRoom(client);
+                client.RoomName = room.Name;
+                Console.WriteLine($"Client {client.Username} has joined private room {client.RoomName}");
+                await _roomServices.SendMessageToRoom("Server", $"{client.Username} has joined the private room {client.RoomName}", client.RoomName);
             }
             else
             {
-                await _chatServer.ServerPrivateMessage(client, $"Room {parts[1]} doesn't exist");
+                await _chatServer.ServerPrivateMessage(client, $"Room with {targetUsername} doesn't exist.");
             }
         }
-
     }
-
 }
