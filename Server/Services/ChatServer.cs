@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Server.Const;
 using Server.Interfaces;
 using Server.Models;
 
@@ -43,7 +44,7 @@ namespace Server.Services
             using Socket server = new(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             server.Bind(ipEndPoint);
             server.Listen();
-            Console.WriteLine("Server has started listening on port 1234");
+            Console.WriteLine(ConstMasseges.PortListening);
 
             IRoom defaultRoom = new Room("Main");
             rooms.Add(defaultRoom);
@@ -64,7 +65,7 @@ namespace Server.Services
                 await _privateChatHandler.CreatePrivateChats(client); // Add this line to create private chats for the new client
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
-                await _roomServices.SendMessageToRoom("Server", $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
+                await _roomServices.SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
                 _ = Task.Run(() => _cleintHandler.HandleClient(client));
             }
 
@@ -73,7 +74,7 @@ namespace Server.Services
         public async Task ServerPrivateMessage(IClient client, string message)
         {
 
-            var response = $"Server: {message}";
+            var response = $"{ConstMasseges.ServerConst}: {message}";
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
@@ -86,13 +87,13 @@ namespace Server.Services
             {
                 if (client.Username == member.Username)
                 {
-                    var response = $"Server: {massege}";
+                    var response = $"{ConstMasseges.ServerConst}: {massege}";
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }
                 else
                 {
-                    var response = $"Server: {massege}";
+                    var response = $"{ConstMasseges.ServerConst}: {massege}";
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }

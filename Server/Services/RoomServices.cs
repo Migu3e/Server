@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text;
+using Server.Const;
 using Server.Interfaces;
 using Server.Models;
 
@@ -76,7 +77,7 @@ public class RoomServices : IRoomServices
                         _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]).AddClientToRoom(client);
                         client.RoomName = parts[1];
                         Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
-                        await SendMessageToRoom("Server", $"{client.Username} has joined the room {parts[1]}", parts[1]);
+                        await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {parts[1]}", parts[1]);
                     }
                 }
                 else
@@ -89,10 +90,10 @@ public class RoomServices : IRoomServices
     public async Task LeaveRoom(IClient client)
         {
             _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
-            await SendMessageToRoom("Server", "has left the room " + client.RoomName, client.RoomName);
+            await SendMessageToRoom(ConstMasseges.ServerConst, "has left the room " + client.RoomName, client.RoomName);
             _chatServer.rooms.FirstOrDefault(r => r.Name == "Main").AddClientToRoom(client);
             client.RoomName = "Main";
-            await SendMessageToRoom("Server", $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
+            await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
         }
 
     public async Task HandleInviteRoom(IClient client, string message)
