@@ -53,7 +53,7 @@ public class RoomServices : IRoomServices
     public async Task HandleCreateRoom(IClient client, string message)
         {
             var parts = message.Split(' ');
-            if (parts.Length == 2)
+            if (ConstCheckCommands.CanCreateRoom(message,_chatServer.rooms) == "room was created")
             {
                 string roomName = parts[1];
                 var room = new Room(roomName);
@@ -61,39 +61,37 @@ public class RoomServices : IRoomServices
                 Console.WriteLine($"Room {roomName} was created by {client.Username}");
                 await _chatServer.PrintToAll(client,$"Room {roomName} was created by {client.Username}");
             }
+            else
+            {
+                _chatServer.PrivateMessage(client, ConstCheckCommands.CanCreateRoom(message,_chatServer.rooms));
+            }
         }
     public async Task HandleJoinRoom(IClient client, string message)
     {
         var parts = message.Split(' ');
-        if (parts.Length < 2)
-        {
-            await _chatServer.ServerPrivateMessage(client, ConstMasseges.ErrorEmptyRoomMassage);
-            return;
-        }
+
 
         var room = _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]);
-        if (room == null)
+        if (ConstCheckCommands.CanJoinRoom(message,room) == "true")
         {
-            await _chatServer.ServerPrivateMessage(client, $"Room {parts[1]} doesn't exist");
-            return;
+            _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
+            Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
+            _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]).AddClientToRoom(client);
+            client.RoomName = parts[1];
+            Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
+            foreach (var existingMessage in room.Messages)
+            {
+                await _chatServer.PrivateMessage(client, existingMessage);
+            }
+            await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {parts[1]}", parts[1]);
+        }
+        else
+        {
+            await _chatServer.PrivateMessage(client, ConstCheckCommands.CanJoinRoom(message, room));
         }
 
-        if (room.Name.Contains("|private|"))
-        {
-            await _chatServer.ServerPrivateMessage(client, ConstMasseges.ErrorCannotEnterPrivateRoom);
-            return;
-        }
 
-        _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
-        Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
-        _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]).AddClientToRoom(client);
-        client.RoomName = parts[1];
-        Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
-        foreach (var existingMessage in room.Messages)
-        {
-            await _chatServer.PrivateMessage(client, existingMessage);
-        }
-        await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {parts[1]}", parts[1]);
+        
     }
 
 
@@ -109,7 +107,7 @@ public class RoomServices : IRoomServices
     public async Task HandleInviteRoom(IClient client, string message)
         {
             var parts = message.Split(' ');
-            if (parts.Length >= 2)
+            if (ConstCheckCommands.CanInviteToRoom(message, client) == "true")
             {
                 string roomName = parts[1];
                 var invitedClient = _chatServer.clients.FirstOrDefault(c => c.Username == client.Username && c.RoomName == roomName);

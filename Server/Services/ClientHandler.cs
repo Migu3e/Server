@@ -49,57 +49,25 @@ public class ClientHandler : ICleintHandler
 
     public async Task HandleMessage(IClient client, string username, string message)
 {
-    switch (message.ToLower())
+    await (message.ToLower() switch
     {
-        case "/help":
-            await _chatServer.ServerPrivateMessage(client, ConstMasseges.HelpMessage);
-            break;
+        _ when ConstCheckOperations.IsList(message) => SendClientList(client),
+        _ when ConstCheckOperations.IsHelp(message) => _chatServer.ServerPrivateMessage(client,ConstMasseges.HelpMessage),
+        _ when ConstCheckOperations.IsLogout(message) => HandleLogout(client, message),
+        _ when ConstCheckOperations.IsCreateRoom(message) => _roomServices.HandleCreateRoom(client, message),
+        _ when ConstCheckOperations.IsJoinRoom(message) => _roomServices.HandleJoinRoom(client, message),
+        _ when ConstCheckOperations.IsInviteRoom(message) => _roomServices.HandleInviteRoom(client, message),
+        _ when ConstCheckOperations.IsLeave(message)=> _roomServices.LeaveRoom(client),
+        _ when ConstCheckOperations.IsListRooms(message) => _roomServices.PrintRooms(client),
+        _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
+        
+        _ => _roomServices.SendMessageToRoom(client.Username, message, client.RoomName)
 
-        case "/logout":
-            await HandleLogout(client, username);
-            break;
-
-        case "/list":
-            await SendClientList(client);
-            break;
-
-        default:
-            await HandleComplexMessage(client, username, message);
-            break;
-    }
+    });
 }
 
-    public async Task HandleComplexMessage(IClient client, string username, string message)
-    {
-        if (message.StartsWith("/croom"))
-        {
-            await _roomServices.HandleCreateRoom(client, message);
-        }
-        else if (message.StartsWith("/jroom"))
-        {
-            await _roomServices.HandleJoinRoom(client, message);
-        }
-        else if (message.StartsWith("/iroom"))
-        {
-            await _roomServices.HandleInviteRoom(client, message);
-        }
-        else if (message.StartsWith("/leave"))
-        {
-            await _roomServices.LeaveRoom(client);
-        }
-        else if (message.StartsWith("/list rooms"))
-        {
-            await _roomServices.PrintRooms(client);
-        }
-        else if (message.StartsWith("/private"))
-        {
-            await _privateChatHandler.HandleJoinPrivateRoom(client, message);
-        }
-        else
-        {
-            await _roomServices.SendMessageToRoom(client.Username, message, client.RoomName);
-        }
-    }
+
+
 
     public async Task HandleLogout(IClient client, string username)
     {
