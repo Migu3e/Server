@@ -11,7 +11,7 @@ public class ConstMasseges
                                       "/iroom <username> <roomname> - Invite a user to a specified room\n" +
                                       "/leave - Leave the current room and return to the main room\n" +
                                       "/list rooms - List all rooms and their members\n" +
-                                      "/whisper <username> <message> - Send a private message to a specific user\n" +
+                                      "/private <username> - enter a private chat with user specified\n" +
                                       "/help - Display this list of commands";
     
     
@@ -23,8 +23,19 @@ public class ConstMasseges
     public const string ServerConst = "Server";
 
     public const string ErrorEmptyRoomMassage = "Invalid. The Command Should Be Used As Such: /jroom [roomName]";
+    public const string TheRoomDosentExist = "Invalid. The Room Specified Dosent Exist";
+    
+    
+    public const string ErrorEmptyInviteRoomMassage = "Invalid. The Command Should Be Used As Such: /iroom [roomName]";
+
     public const string ErrorCannotEnterPrivateRoom = "Error, Cannot Enter Private Room, Type A Vailid Room";
     public const string InvitationToRoomMassage = "You have been invited to room: ";
+
+    public const string CannotCreateEmptyRoom = "Error Cannot Create Empty Room, Specify A Name";
+    public const string CannotCreateRoomAlreadyExist = "Error Cannot Create A Room, That Already Exist";
+    public const string RoomWasCreated = "Room Was Successfully Created";
+    public const string UnknownCommand = "An Unknown Was Typed";
+
 
 
 
