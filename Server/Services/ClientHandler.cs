@@ -49,21 +49,30 @@ public class ClientHandler : ICleintHandler
 
     public async Task HandleMessage(IClient client, string username, string message)
 {
-    await (message.ToLower() switch
+    if (ConstCheckOperations.IsCommand(message))
     {
-        _ when ConstCheckOperations.IsList(message) => SendClientList(client),
-        _ when ConstCheckOperations.IsHelp(message) => _chatServer.ServerPrivateMessage(client,ConstMasseges.HelpMessage),
-        _ when ConstCheckOperations.IsLogout(message) => HandleLogout(client, message),
-        _ when ConstCheckOperations.IsCreateRoom(message) => _roomServices.HandleCreateRoom(client, message),
-        _ when ConstCheckOperations.IsJoinRoom(message) => _roomServices.HandleJoinRoom(client, message),
-        _ when ConstCheckOperations.IsInviteRoom(message) => _roomServices.HandleInviteRoom(client, message),
-        _ when ConstCheckOperations.IsLeave(message)=> _roomServices.LeaveRoom(client),
-        _ when ConstCheckOperations.IsListRooms(message) => _roomServices.PrintRooms(client),
-        _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
-        
-        _ => _roomServices.SendMessageToRoom(client.Username, message, client.RoomName)
+        await (message.ToLower() switch
+        {
+   
+            _ when ConstCheckOperations.IsList(message) => SendClientList(client),
+            _ when ConstCheckOperations.IsHelp(message) => _chatServer.ServerPrivateMessage(client,ConstMasseges.HelpMessage),
+            _ when ConstCheckOperations.IsLogout(message) => HandleLogout(client, message),
+            _ when ConstCheckOperations.IsCreateRoom(message) => _roomServices.HandleCreateRoom(client, message),
+            _ when ConstCheckOperations.IsJoinRoom(message) => _roomServices.HandleJoinRoom(client, message),
+            _ when ConstCheckOperations.IsInviteRoom(message) => _roomServices.HandleInviteRoom(client, message),
+            _ when ConstCheckOperations.IsLeave(message)=> _roomServices.LeaveRoom(client),
+            _ when ConstCheckOperations.IsListRooms(message) => _roomServices.PrintRooms(client),
+            _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
 
-    });
+            _=> _chatServer.ServerPrivateMessage(client, ConstMasseges.UnknownCommand)
+
+        });
+    }
+    else
+    {
+        _roomServices.SendMessageToRoom(client.Username, message, client.RoomName);
+    }
+    
 }
 
 

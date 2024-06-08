@@ -37,7 +37,6 @@ public class RoomServices : IRoomServices
                         await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                     }
                     var newresponse = $"<{DateTime.Now} - {username}> {message}\n";
-                    Console.WriteLine(newresponse);
                     room.Messages.Add(newresponse);
                 }
             }
@@ -53,7 +52,7 @@ public class RoomServices : IRoomServices
     public async Task HandleCreateRoom(IClient client, string message)
         {
             var parts = message.Split(' ');
-            if (ConstCheckCommands.CanCreateRoom(message,_chatServer.rooms) == "room was created")
+            if (ConstCheckCommands.CanCreateRoom(message,_chatServer.rooms) == ConstMasseges.RoomWasCreated)
             {
                 string roomName = parts[1];
                 var room = new Room(roomName);

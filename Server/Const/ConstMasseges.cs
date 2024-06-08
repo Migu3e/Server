@@ -34,6 +34,8 @@ public class ConstMasseges
     public const string CannotCreateEmptyRoom = "Error Cannot Create Empty Room, Specify A Name";
     public const string CannotCreateRoomAlreadyExist = "Error Cannot Create A Room, That Already Exist";
     public const string RoomWasCreated = "Room Was Successfully Created";
+    public const string UnknownCommand = "An Unknown Was Typed";
+
 
 
 
