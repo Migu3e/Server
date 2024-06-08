@@ -74,7 +74,15 @@ namespace Server.Services
         public async Task ServerPrivateMessage(IClient client, string message)
         {
 
-            var response = $"{ConstMasseges.ServerConst}: {message}";
+            var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {message}";
+            var responseByte = Encoding.UTF8.GetBytes(response);
+            await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+        }
+        
+        public async Task PrivateMessage(IClient client, string message)
+        {
+
+            var response = $"{message}";
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
@@ -87,13 +95,13 @@ namespace Server.Services
             {
                 if (client.Username == member.Username)
                 {
-                    var response = $"{ConstMasseges.ServerConst}: {massege}";
+                    var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {massege}";
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }
                 else
                 {
-                    var response = $"{ConstMasseges.ServerConst}: {massege}";
+                    var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {massege}";
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }
