@@ -22,8 +22,12 @@ public class ConstMasseges
     
     public const string ServerConst = "Server";
 
+    public const string ErrorEmptyRoomMassage = "Invalid. The Command Should Be Used As Such: /jroom [roomName]";
+    public const string ErrorCannotEnterPrivateRoom = "Error, Cannot Enter Private Room, Type A Vailid Room";
+    public const string InvitationToRoomMassage = "You have been invited to room: ";
 
-    
+
+
 
 
 }
