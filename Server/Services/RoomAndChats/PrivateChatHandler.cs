@@ -61,6 +61,10 @@ namespace Server.Services
                 room.AddClientToRoom(client);
                 client.RoomName = room.Name;
                 Console.WriteLine($"Client {client.Username} has joined private room {client.RoomName}");
+                foreach (var existingMessage in room.Messages)
+                {
+                    await _chatServer.PrivateMessage(client, existingMessage);
+                }
                 await _roomServices.SendMessageToRoom("Server", $"{client.Username} has joined the private room {client.RoomName}", client.RoomName);
             }
             else
