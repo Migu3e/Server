@@ -8,5 +8,6 @@ public interface IRoomServices
     Task LeaveRoom(IClient client);
     Task HandleInviteRoom(IClient client, string message);
     Task ExistingRooms();
+    Task HandleDeleteRoom(string message);
     Task PrintRooms(IClient client);
 }

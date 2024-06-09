@@ -63,5 +63,27 @@ namespace Server.Const
 
             return "true";
         }
+        public static string CanDeleteRoom(string message, IRoom? room)
+        {
+            var parts = message.Split(' ');
+
+            if (parts.Length < 2)
+            {
+                return ConstMasseges.ErrorEmptyRoomMassage;
+            }
+
+            if (room == null)
+            {
+                return ConstMasseges.TheRoomDosentExist;
+            }
+
+            if (room.Name.Contains("|private|"))
+            {
+                return ConstMasseges.ErrorCannotEnterPrivateRoom;
+            }
+
+            return "true";
+        }
+
     }
 }

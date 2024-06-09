@@ -56,10 +56,11 @@ public class ClientHandler : ICleintHandler
    
             _ when ConstCheckOperations.IsList(message) => SendClientList(client),
             _ when ConstCheckOperations.IsHelp(message) => _chatServer.ServerPrivateMessage(client,ConstMasseges.HelpMessage),
-            _ when ConstCheckOperations.IsLogout(message) => HandleLogout(client, message),
+            _ when ConstCheckOperations.IsLogout(message) => HandleLogout(client, client.Username),
             _ when ConstCheckOperations.IsCreateRoom(message) => _roomServices.HandleCreateRoom(client, message),
             _ when ConstCheckOperations.IsJoinRoom(message) => _roomServices.HandleJoinRoom(client, message),
             _ when ConstCheckOperations.IsInviteRoom(message) => _roomServices.HandleInviteRoom(client, message),
+            _ when ConstCheckOperations.IsDeleteRoom(message) => _roomServices.HandleDeleteRoom(message),
             _ when ConstCheckOperations.IsLeave(message)=> _roomServices.LeaveRoom(client),
             _ when ConstCheckOperations.IsListRooms(message) => _roomServices.PrintRooms(client),
             _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
