@@ -4,7 +4,7 @@ namespace Server.Models
 {
     public class Room : IRoom
     {
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public List<IClient> Members { get; private set; }
 
         public List<string> Messages { get; set; }

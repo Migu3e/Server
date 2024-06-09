@@ -10,6 +10,8 @@ namespace Server.MongoDB
         public ObjectId Id { get; set; }
 
         [BsonElement("Name")]
-        public string Name { get; set; }
+        public string RoomName { get; set; }
+        
+        [BsonElement("roommessages")] public List<string> MList { get; set; }
     }
 }

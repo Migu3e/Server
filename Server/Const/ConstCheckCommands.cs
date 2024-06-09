@@ -9,6 +9,7 @@ namespace Server.Const
     {
         public static string CanCreateRoom(string message, List<IRoom> rooms)
         {
+            
             var parts = message.Split(' ');
 
             if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[1]))
