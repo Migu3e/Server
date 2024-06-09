@@ -119,6 +119,7 @@ public class RoomServices : IRoomServices
             currentRoom?.RemoveClientFromRoom(client);
             Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
 
+
             // Add the client to the new room
             var newRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]);
             newRoom?.AddClientToRoom(client);
@@ -151,11 +152,12 @@ public class RoomServices : IRoomServices
 
     public async Task LeaveRoom(IClient client)
         {
-            _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
             await SendMessageToRoom(ConstMasseges.ServerConst, client.Username+ " has left the room " + client.RoomName, client.RoomName);
+            _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
             _chatServer.rooms.FirstOrDefault(r => r.Name == "Main").AddClientToRoom(client);
             client.RoomName = "Main";
             await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
+            
         }
 
     public async Task HandleInviteRoom(IClient client, string message)
