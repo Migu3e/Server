@@ -148,7 +148,7 @@ public class RoomServices : IRoomServices
         }
     }
 
-    public async Task HandleDeleteRoom(string message)
+    public async Task HandleDeleteRoom(string message,IClient client)
     {
         var parts = message.Split(' ');
         var roomName = parts[1];
@@ -156,7 +156,7 @@ public class RoomServices : IRoomServices
         var room = _chatServer.rooms.FirstOrDefault(r => r.Name == roomName);
 
         // Ensure the message has the correct format
-        if (ConstCheckCommands.CanDeleteRoom(message,room) == "true")
+        if (ConstCheckCommands.CanDeleteRoom(message,_chatServer.rooms) == ConstMasseges.DeletedRoom)
         {
         // Remove the room from the in-memory collection
             _chatServer.rooms.Remove(room);
@@ -165,12 +165,13 @@ public class RoomServices : IRoomServices
             var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
             var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
             await collection.DeleteOneAsync(filter);
+            _chatServer.PrintToAll(client, ConstMasseges.DeletedRoom);
 
             Console.WriteLine($"Room '{roomName}' has been deleted.");            return;
         }
         else
         {
-            Console.WriteLine(ConstCheckCommands.CanDeleteRoom(message,room));
+            _chatServer.ServerPrivateMessage(client,(ConstCheckCommands.CanDeleteRoom(message,_chatServer.rooms)));
         }
 
 

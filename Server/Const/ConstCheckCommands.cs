@@ -9,7 +9,7 @@ namespace Server.Const
     {
         public static string CanCreateRoom(string message, List<IRoom> rooms)
         {
-            
+
             var parts = message.Split(' ');
 
             if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[1]))
@@ -63,7 +63,8 @@ namespace Server.Const
 
             return "true";
         }
-        public static string CanDeleteRoom(string message, IRoom? room)
+
+        public static string CanDeleteRoom(string message, List<IRoom> rooms)
         {
             var parts = message.Split(' ');
 
@@ -71,6 +72,9 @@ namespace Server.Const
             {
                 return ConstMasseges.ErrorEmptyRoomMassage;
             }
+
+            string roomName = parts[1];
+            var room = rooms.FirstOrDefault(r => r.Name == roomName);
 
             if (room == null)
             {
@@ -82,8 +86,7 @@ namespace Server.Const
                 return ConstMasseges.ErrorCannotEnterPrivateRoom;
             }
 
-            return "true";
+            return ConstMasseges.DeletedRoom;
         }
-
     }
 }
