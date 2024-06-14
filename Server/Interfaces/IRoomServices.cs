@@ -7,5 +7,7 @@ public interface IRoomServices
     Task SendMessageToRoom(string username, string message, string roomName);
     Task LeaveRoom(IClient client);
     Task HandleInviteRoom(IClient client, string message);
+    Task ExistingRooms();
+    Task HandleDeleteRoom(string message, IClient client);
     Task PrintRooms(IClient client);
 }

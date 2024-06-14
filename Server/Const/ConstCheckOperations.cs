@@ -35,6 +35,10 @@ namespace Server.Const
         {
             return message.StartsWith("/iroom");
         }
+        public static bool IsDeleteRoom(string message)
+        {
+            return message.StartsWith("/droom");
+        }
 
         public static bool IsPrivate(string message)
         {
@@ -48,7 +52,7 @@ namespace Server.Const
 
         public static bool IsLogout(string message)
         {
-            return message == "logout";
+            return message == "/logout";
         }
     }
 }

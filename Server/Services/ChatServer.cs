@@ -48,6 +48,7 @@ namespace Server.Services
 
             IRoom defaultRoom = new Room("Main");
             rooms.Add(defaultRoom);
+            _roomServices.ExistingRooms();
             
 
 
@@ -108,11 +109,6 @@ namespace Server.Services
                 
             }
         }
-
         
-
-
-
-
     }
 }

@@ -1,9 +1,11 @@
 using System.Net.Sockets;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
+using MongoDB.Driver;
 using Server.Const;
 using Server.Interfaces;
 using Server.Models;
+using Server.MongoDB;
 
 namespace Server.Services;
 
@@ -14,6 +16,26 @@ public class RoomServices : IRoomServices
     public RoomServices(IChatServer services)
     {
         _chatServer = services;
+    }
+    
+    public async Task ExistingRooms()
+    {
+        var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+        var rooms = await collection.Find(_ => true).ToListAsync();
+
+        foreach (var room in rooms)
+        {
+            var roomInstance = new Room(room.RoomName);
+            if (_chatServer.rooms.Any(p => p.Name == room.RoomName))
+            {
+                // Room already exists, skip adding
+                continue;
+            }
+            else
+            {
+                _chatServer.rooms.Add(roomInstance);
+            }
+        }
     }
 
     public async Task SendMessageToRoom(string username, string message, string roomName)
@@ -36,8 +58,16 @@ public class RoomServices : IRoomServices
                         var responseByte = Encoding.UTF8.GetBytes(response);
                         await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                     }
-                    var newresponse = $"<{DateTime.Now} - {username}> {message}\n";
-                    room.Messages.Add(newresponse);
+                    
+                    var newResponse = $"<{DateTime.Now} - {username}> {message}\n";
+                    room.Messages.Add(newResponse);
+
+                    var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+                    var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
+                    var update = Builders<RoomDB>.Update.Push(r => r.MList, newResponse);
+
+                    await collection.UpdateOneAsync(filter, update);
+                    
                 }
             }
                 
@@ -59,6 +89,17 @@ public class RoomServices : IRoomServices
                 _chatServer.rooms.Add(room);
                 Console.WriteLine($"Room {roomName} was created by {client.Username}");
                 await _chatServer.PrintToAll(client,$"Room {roomName} was created by {client.Username}");
+                
+                var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+                var data = new RoomDB
+                {
+                    RoomName = roomName,
+                    MList = new List<string>()
+                    
+                };
+
+                collection.InsertOne(data);
+
             }
             else
             {
@@ -69,38 +110,84 @@ public class RoomServices : IRoomServices
     {
         var parts = message.Split(' ');
 
-
+        // Find the room in the in-memory collection
         var room = _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]);
-        if (ConstCheckCommands.CanJoinRoom(message,room) == "true")
+        if (ConstCheckCommands.CanJoinRoom(message, room) == "true")
         {
-            _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
+            // Remove the client from the current room
+            var currentRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName);
+            currentRoom?.RemoveClientFromRoom(client);
             Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
-            _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]).AddClientToRoom(client);
+
+
+            // Add the client to the new room
+            var newRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]);
+            newRoom?.AddClientToRoom(client);
             client.RoomName = parts[1];
             Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
-            foreach (var existingMessage in room.Messages)
+
+            // Fetch the room document from MongoDB to get the message list (MList)
+            var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+            var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, parts[1]);
+            var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
+
+            if (roomFromDb != null)
             {
-                await _chatServer.PrivateMessage(client, existingMessage);
+                foreach (var messageforeach in roomFromDb.MList)
+                {
+                    await _chatServer.PrivateMessage(client, messageforeach);
+                }
             }
+
+            // Notify the room that the client has joined
             await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {parts[1]}", parts[1]);
         }
         else
         {
             await _chatServer.PrivateMessage(client, ConstCheckCommands.CanJoinRoom(message, room));
         }
-
-
-        
     }
+
+    public async Task HandleDeleteRoom(string message,IClient client)
+    {
+        var parts = message.Split(' ');
+        var roomName = parts[1];
+
+        var room = _chatServer.rooms.FirstOrDefault(r => r.Name == roomName);
+
+        // Ensure the message has the correct format
+        if (ConstCheckCommands.CanDeleteRoom(message,_chatServer.rooms) == ConstMasseges.DeletedRoom)
+        {
+        // Remove the room from the in-memory collection
+            _chatServer.rooms.Remove(room);
+
+            // Remove the room from the MongoDB collection
+            var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+            var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
+            await collection.DeleteOneAsync(filter);
+            _chatServer.PrintToAll(client, ConstMasseges.DeletedRoom);
+
+            Console.WriteLine($"Room '{roomName}' has been deleted.");            return;
+        }
+        else
+        {
+            _chatServer.ServerPrivateMessage(client,(ConstCheckCommands.CanDeleteRoom(message,_chatServer.rooms)));
+        }
+
+
+    }
+
+
 
 
     public async Task LeaveRoom(IClient client)
         {
-            _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
             await SendMessageToRoom(ConstMasseges.ServerConst, client.Username+ " has left the room " + client.RoomName, client.RoomName);
+            _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
             _chatServer.rooms.FirstOrDefault(r => r.Name == "Main").AddClientToRoom(client);
             client.RoomName = "Main";
             await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
+            
         }
 
     public async Task HandleInviteRoom(IClient client, string message)
