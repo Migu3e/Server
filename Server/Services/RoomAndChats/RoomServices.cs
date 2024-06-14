@@ -165,7 +165,7 @@ public class RoomServices : IRoomServices
             var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
             var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
             await collection.DeleteOneAsync(filter);
-            _chatServer.PrintToAll(client, ConstMasseges.DeletedRoom);
+            _chatServer.PrintToAll(client, $"Room '{roomName}' has been deleted.");
 
             Console.WriteLine($"Room '{roomName}' has been deleted.");            return;
         }
