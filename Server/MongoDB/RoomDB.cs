@@ -12,6 +12,7 @@ namespace Server.MongoDB
         [BsonElement("Name")]
         public string RoomName { get; set; }
         
-        [BsonElement("roommessages")] public List<string> MList { get; set; }
+        [BsonElement("roommessages")]
+        public List<string> MList { get; set; }
     }
 }
