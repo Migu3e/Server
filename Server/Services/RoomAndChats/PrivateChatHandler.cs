@@ -57,6 +57,12 @@ namespace Server.Services
                     currentRoom.RemoveClientFromRoom(client);
                     Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
                 }
+                foreach (var newClient in _chatServer.clients.Where(c => c.Username == targetUsername))
+                {
+                    _chatServer.ServerPrivateMessage(newClient,
+                        $"{client.Username} Has Enter The Private Chat With You");
+                }
+
 
                 room.AddClientToRoom(client);
                 client.RoomName = room.Name;
