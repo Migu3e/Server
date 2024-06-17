@@ -12,7 +12,7 @@ namespace Server.Const
 
             var parts = message.Split(' ');
 
-            if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[1]))
+            if (parts.Length < 3 || string.IsNullOrWhiteSpace(parts[1]))
             {
                 return ConstMasseges.CannotCreateEmptyRoom;
             }
@@ -29,7 +29,7 @@ namespace Server.Const
         {
             var parts = message.Split(' ');
 
-            if (parts.Length < 2)
+            if (parts.Length != 3)
             {
                 return ConstMasseges.ErrorEmptyRoomMassage;
             }

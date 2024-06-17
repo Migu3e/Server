@@ -80,73 +80,92 @@ public class RoomServices : IRoomServices
 
 
     public async Task HandleCreateRoom(IClient client, string message)
-        {
-            var parts = message.Split(' ');
-            if (ConstCheckCommands.CanCreateRoom(message,_chatServer.rooms) == ConstMasseges.RoomWasCreated)
-            {
-                string roomName = parts[1];
-                var room = new Room(roomName);
-                _chatServer.rooms.Add(room);
-                Console.WriteLine($"Room {roomName} was created by {client.Username}");
-                await _chatServer.PrintToAll(client,$"Room {roomName} was created by {client.Username}");
-                
-                var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
-                var data = new RoomDB
-                {
-                    RoomName = roomName,
-                    MList = new List<string>()
-                    
-                };
-
-                collection.InsertOne(data);
-
-            }
-            else
-            {
-                _chatServer.PrivateMessage(client, ConstCheckCommands.CanCreateRoom(message,_chatServer.rooms));
-            }
-        }
-    public async Task HandleJoinRoom(IClient client, string message)
+{
+    var parts = message.Split(' ');
+    string validationMessage = ConstCheckCommands.CanCreateRoom(message, _chatServer.rooms);
+    
+    if (validationMessage == ConstMasseges.RoomWasCreated)
     {
-        var parts = message.Split(' ');
+        string roomName = parts[1];
+        string password = parts[2];
 
-        // Find the room in the in-memory collection
-        var room = _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]);
-        if (ConstCheckCommands.CanJoinRoom(message, room) == "true")
+        var room = new Room(roomName, password);
+        _chatServer.rooms.Add(room);
+        Console.WriteLine($"Room {roomName} was created by {client.Username}");
+        await _chatServer.PrintToAll(client, $"Room {roomName} was created by {client.Username}");
+        
+        var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+        var data = new RoomDB
         {
-            // Remove the client from the current room
-            var currentRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName);
-            currentRoom?.RemoveClientFromRoom(client);
-            Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
+            RoomName = roomName,
+            Password = password,
+            MList = new List<string>()
+        };
 
-
-            // Add the client to the new room
-            var newRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == parts[1]);
-            newRoom?.AddClientToRoom(client);
-            client.RoomName = parts[1];
-            Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
-
-            // Fetch the room document from MongoDB to get the message list (MList)
-            var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
-            var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, parts[1]);
-            var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
-
-            if (roomFromDb != null)
-            {
-                foreach (var messageforeach in roomFromDb.MList)
-                {
-                    await _chatServer.PrivateMessage(client, messageforeach);
-                }
-            }
-
-            // Notify the room that the client has joined
-            await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {parts[1]}", parts[1]);
-        }
-        else
-        {
-            await _chatServer.PrivateMessage(client, ConstCheckCommands.CanJoinRoom(message, room));
-        }
+        await collection.InsertOneAsync(data);
     }
+    else
+    {
+        await _chatServer.PrivateMessage(client, validationMessage);
+    }
+}
+
+public async Task HandleJoinRoom(IClient client, string message)
+{
+    var parts = message.Split(' ');
+    
+    if (parts.Length < 3)
+    {
+        await _chatServer.PrivateMessage(client, "Incorrect room name or password.");
+        return;
+    }
+
+    string roomName = parts[1];
+    string password = parts[2];
+    
+    // Fetch the room document from MongoDB to get the password and message list (MList)
+    var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+    var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
+    var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
+
+    // Validate the room and password
+    if (roomFromDb == null || roomFromDb.Password != password)
+    {
+        await _chatServer.PrivateMessage(client, "Incorrect room name or password.");
+        return;
+    }
+
+    // Find the room in the in-memory collection
+    var room = _chatServer.rooms.FirstOrDefault(r => r.Name == roomName);
+    string validationMessage = ConstCheckCommands.CanJoinRoom(message, room);
+
+    if (validationMessage == "true")
+    {
+        // Remove the client from the current room
+        var currentRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName);
+        currentRoom?.RemoveClientFromRoom(client);
+        Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
+
+        // Add the client to the new room
+        var newRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == roomName);
+        newRoom?.AddClientToRoom(client);
+        client.RoomName = roomName;
+        Console.WriteLine($"Client {client.Username} has joined room {client.RoomName}");
+
+        foreach (var messageforeach in roomFromDb.MList)
+        {
+            await _chatServer.PrivateMessage(client, messageforeach);
+        }
+
+        // Notify the room that the client has joined
+        await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {roomName}", roomName);
+    }
+    else
+    {
+        await _chatServer.PrivateMessage(client, validationMessage);
+    }
+}
+
 
     public async Task HandleDeleteRoom(string message,IClient client)
     {

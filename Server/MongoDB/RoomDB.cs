@@ -2,6 +2,8 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
+
+
 namespace Server.MongoDB
 {
     public class RoomDB
@@ -12,6 +14,9 @@ namespace Server.MongoDB
         [BsonElement("Name")]
         public string RoomName { get; set; }
         
+        [BsonElement("Password")]
+        public string Password { get; set; }
+
         [BsonElement("roommessages")]
         public List<string> MList { get; set; }
     }
