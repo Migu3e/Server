@@ -2,6 +2,6 @@ namespace Server.Interfaces;
 
 public interface IPrivateChatHandler
 {
-    Task CreatePrivateChats(IClient newClient);
+    Task CreatePrivateChats();
     Task HandleJoinPrivateRoom(IClient client, string message);
 }

@@ -49,6 +49,7 @@ namespace Server.Services
             IRoom defaultRoom = new Room("Main");
             rooms.Add(defaultRoom);
             _roomServices.ExistingRooms();
+            _privateChatHandler.CreatePrivateChats();
             
 
 
@@ -59,11 +60,10 @@ namespace Server.Services
                 var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
                 var username = Encoding.UTF8.GetString(buffer, 0, received).Trim();
 
-                IClient client = new Client(handler, username, defaultRoom.Name);
+                IClient client = new Models.Client(handler, username, defaultRoom.Name);
                 defaultRoom.AddClientToRoom(client);
                 clients.Add(client);
                 await _cleintHandler.UpdatedClientList(client);
-                await _privateChatHandler.CreatePrivateChats(client); // Add this line to create private chats for the new client
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
                 await _roomServices.SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
