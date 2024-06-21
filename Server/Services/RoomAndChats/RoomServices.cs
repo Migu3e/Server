@@ -229,13 +229,13 @@ public async Task HandleJoinRoom(IClient client, string message)
             if (invitedClient != null)
             {
                 // The invited client is online
-                await _chatServer.ServerPrivateMessage(invitedClient, $"{client.Username} has invited you to join room {roomName}.");
-                await _chatServer.PrivateMessage(client, $"You have invited {invitedUsername} to join room {roomName}.");
+                await _chatServer.ServerPrivateMessage(invitedClient, ConstFunctions.InviteToRoomMessege(roomName,client.Username));
+                await _chatServer.PrivateMessage(client, ConstFunctions.InviteToRoom(roomName,invitedUsername));
             }
             else
             {
                 // The invited client is not online
-                await _chatServer.PrivateMessage(client, $"{invitedUsername} is not online and cannot be invited.");
+                await _chatServer.PrivateMessage(client, ConstMasseges.ClientIsOffline);
             }
         }
         else

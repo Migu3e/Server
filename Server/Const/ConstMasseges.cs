@@ -49,6 +49,8 @@ public class ConstMasseges
     public const string InvalidFormat = "Invalid Message Format.";
     public const string DefaultRoom = "Main";
     public const string LeftChat = "Has Left The Chat";
+    public const string ClientIsOffline = "Error: The Client Is Not Online Or Dosent Exist, And Cannot Be Invited.";
+
 
 
 

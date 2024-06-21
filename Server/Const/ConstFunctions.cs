@@ -22,4 +22,14 @@ public class ConstFunctions
     {
         return $"{clientName} has left the room {roomName}\n";
     }
+
+    public static string InviteToRoom(string roomName, string clientName)
+    {
+        return $"You have invited {clientName} to join room {roomName}.";
+    }
+    public static string InviteToRoomMessege(string roomName, string clientName)
+    {
+        return $"{clientName} has invited you to join room {roomName}.";
+    }
+    
 }
