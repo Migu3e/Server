@@ -48,9 +48,6 @@ namespace Server.Services
 
             IRoom defaultRoom = new Room("Main");
             rooms.Add(defaultRoom);
-            _roomServices.ExistingRooms();
-            _privateChatHandler.CreatePrivateChats();
-            
 
 
             while (true)
@@ -66,6 +63,7 @@ namespace Server.Services
                 await _cleintHandler.UpdatedClientList(client);
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
+                _roomServices.ExistingRooms();
                 await _roomServices.SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
                 _ = Task.Run(() => _cleintHandler.HandleClient(client));
             }

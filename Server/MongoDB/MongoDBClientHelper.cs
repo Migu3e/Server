@@ -10,9 +10,9 @@ public class MongoDBClientHelper
     static MongoDBClientHelper()
     {
         // MongoDB connection string
-        var client = new MongoClient(ConstMasseges.DataBaseConnection);
+        var client = new MongoClient(ConstMasseges.DatabaseConnection);
         // Database name
-        database = client.GetDatabase("client");
+        database = client.GetDatabase(ConstMasseges.DatabaseName);
     }
 
     public static IMongoCollection<T> GetCollection<T>(string collectionName)

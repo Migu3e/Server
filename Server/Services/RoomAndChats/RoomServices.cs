@@ -20,7 +20,7 @@ public class RoomServices : IRoomServices
     
     public async Task ExistingRooms()
     {
-        var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+        var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
         var rooms = await collection.Find(_ => true).ToListAsync();
 
         foreach (var room in rooms)
@@ -62,7 +62,7 @@ public class RoomServices : IRoomServices
                     var newResponse = $"<{DateTime.Now} - {username}> {message}\n";
                     room.Messages.Add(newResponse);
 
-                    var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+                    var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
                     var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
                     var update = Builders<RoomDB>.Update.Push(r => r.MList, newResponse);
 
@@ -94,7 +94,7 @@ public class RoomServices : IRoomServices
         Console.WriteLine($"Room {roomName} was created by {client.Username}");
         await _chatServer.PrintToAll(client, $"Room {roomName} was created by {client.Username}");
         
-        var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+        var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
         var data = new RoomDB
         {
             RoomName = roomName,
@@ -124,7 +124,7 @@ public async Task HandleJoinRoom(IClient client, string message)
     string password = parts[2];
     
     // Fetch the room document from MongoDB to get the password and message list (MList)
-    var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+    var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
     var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
     var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
 
@@ -181,7 +181,7 @@ public async Task HandleJoinRoom(IClient client, string message)
             _chatServer.rooms.Remove(room);
 
             // Remove the room from the MongoDB collection
-            var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+            var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
             var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
             await collection.DeleteOneAsync(filter);
             _chatServer.PrintToAll(client, $"Room '{roomName}' has been deleted.");

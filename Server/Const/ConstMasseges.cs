@@ -36,8 +36,8 @@ public class ConstMasseges
     public const string RoomWasCreated = "Room Was Successfully Created";
     public const string UnknownCommand = "An Unknown Command Was Typed, Try /help For More Info";
     public const string DeletedRoom = "The Room Was Deleted Successfully";
-    public const string DataBaseConnection = "mongodb+srv://pc:123123gg123123@cluster0.tjadqzu.mongodb.net/";
-
+    public const string DatabaseConnection = "mongodb+srv://pc:123123gg123123@cluster0.tjadqzu.mongodb.net/";
+    public const string DatabaseName = "chats";
 
 
 
