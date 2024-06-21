@@ -6,7 +6,7 @@ public class ConstMasseges
     public const string HelpMessage = "The commands are:\n" +
                                       "/list - Display the connected users\n" +
                                       "/logout - Disconnect from the server\n" +
-                                      "/croom <roomname> - Create a new room with the specified name\n" +
+                                      "/croom <roomname> <roompassword>- Create a new room with the specified name\n" +
                                       "/jroom <roomname> - Join an existing room with the specified name\n" +
                                       "/iroom <username> <roomname> - Invite a user to a specified room\n" +
                                       "/leave - Leave the current room and return to the main room\n" +
@@ -43,9 +43,14 @@ public class ConstMasseges
     public const string DatabaseName = "chats";
     public const string CollectionDataClient = "dataclient";    
     public const string CollectionChats = "chats";
-
+    
+    
+    public const string JoinPrivateChatWithSelf = "Error: Cannot Join A Private Room With Yourself.";
+    public const string InvalidFormat = "Invalid Message Format.";
     public const string DefaultRoom = "Main";
     public const string LeftChat = "Has Left The Chat";
+    public const string ClientIsOffline = "Error: The Client Is Not Online Or Dosent Exist, And Cannot Be Invited.";
+
 
 
 

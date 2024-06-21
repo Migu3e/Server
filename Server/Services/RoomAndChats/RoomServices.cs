@@ -92,7 +92,7 @@ public class RoomServices : IRoomServices
         var room = new Room(roomName, password);
         _chatServer.rooms.Add(room);
         Console.WriteLine($"Room {roomName} was created by {client.Username}");
-        await _chatServer.PrintToAll(client, $"Room {roomName} was created by {client.Username}");
+        await _chatServer.PrintToAll(client, ConstFunctions.RoomWasCreated(client.Username,roomName));
         
         var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
         var data = new RoomDB
@@ -158,7 +158,7 @@ public async Task HandleJoinRoom(IClient client, string message)
         }
 
         // Notify the room that the client has joined
-        await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {roomName}", roomName);
+        await SendMessageToRoom(ConstMasseges.ServerConst, ConstFunctions.ClientJoinedRoom(roomName,client.Username), roomName);
     }
     else
     {
@@ -184,7 +184,7 @@ public async Task HandleJoinRoom(IClient client, string message)
             var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
             var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
             await collection.DeleteOneAsync(filter);
-            _chatServer.PrintToAll(client, $"Room '{roomName}' has been deleted.");
+            _chatServer.PrintToAll(client,ConstFunctions.RoomWasDeleted(roomName));
 
             Console.WriteLine($"Room '{roomName}' has been deleted.");            return;
         }
@@ -201,27 +201,48 @@ public async Task HandleJoinRoom(IClient client, string message)
 
     public async Task LeaveRoom(IClient client)
         {
-            await SendMessageToRoom(ConstMasseges.ServerConst, client.Username+ " has left the room " + client.RoomName, client.RoomName);
+            await SendMessageToRoom(ConstMasseges.ServerConst,ConstFunctions.ClientLeftRoom(client.RoomName,client.Username), client.RoomName);
             _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
             _chatServer.rooms.FirstOrDefault(r => r.Name == ConstMasseges.DefaultRoom).AddClientToRoom(client);
             client.RoomName = ConstMasseges.DefaultRoom;
-            await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
+            await SendMessageToRoom(ConstMasseges.ServerConst, ConstFunctions.ClientJoinedRoom(client.RoomName,client.Username), client.RoomName);
             
         }
 
     public async Task HandleInviteRoom(IClient client, string message)
+    {
+        var parts = message.Split(' ');
+    
+        if (parts.Length < 3)
         {
-            var parts = message.Split(' ');
-            if (ConstCheckCommands.CanInviteToRoom(message, client) == "true")
+            await _chatServer.PrivateMessage(client, ConstMasseges.InvalidFormat);
+            return;
+        }
+
+        string roomName = parts[1];
+        string invitedUsername = parts[2];
+
+        if (ConstCheckCommands.CanInviteToRoom(message, client) == "true")
+        {
+            var invitedClient = _chatServer.clients.FirstOrDefault(c => c.Username == invitedUsername);
+
+            if (invitedClient != null)
             {
-                string roomName = parts[1];
-                var invitedClient = _chatServer.clients.FirstOrDefault(c => c.Username == client.Username && c.RoomName == roomName);
-                if (invitedClient != null)
-                {
-                    await _chatServer.ServerPrivateMessage(client, ConstMasseges.InvitationToRoomMassage + roomName);
-                }
+                // The invited client is online
+                await _chatServer.ServerPrivateMessage(invitedClient, ConstFunctions.InviteToRoomMessege(roomName,client.Username));
+                await _chatServer.PrivateMessage(client, ConstFunctions.InviteToRoom(roomName,invitedUsername));
+            }
+            else
+            {
+                // The invited client is not online
+                await _chatServer.PrivateMessage(client, ConstMasseges.ClientIsOffline);
             }
         }
+        else
+        {
+            await _chatServer.PrivateMessage(client, ConstCheckCommands.CanInviteToRoom(message, client));
+        }
+    }
 
     public async Task PrintRooms(IClient client)
         {
