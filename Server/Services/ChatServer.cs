@@ -46,7 +46,7 @@ namespace Server.Services
             server.Listen();
             Console.WriteLine(ConstMasseges.PortListening);
 
-            IRoom defaultRoom = new Room("Main");
+            IRoom defaultRoom = new Room(ConstMasseges.DefaultRoom);
             rooms.Add(defaultRoom);
 
 
@@ -73,7 +73,7 @@ namespace Server.Services
         public async Task ServerPrivateMessage(IClient client, string message)
         {
 
-            var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {message}";
+            var response = ConstFunctions.Response(ConstMasseges.ServerConst, message);
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
@@ -81,8 +81,8 @@ namespace Server.Services
         public async Task PrivateMessage(IClient client, string message)
         {
 
-            var response = $"{message}";
-            var responseByte = Encoding.UTF8.GetBytes(response);
+            var response = ConstFunctions.Response("", message);
+            var responseByte = Encoding.UTF8.GetBytes(response);    
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
 
@@ -94,13 +94,13 @@ namespace Server.Services
             {
                 if (client.Username == member.Username)
                 {
-                    var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {massege}";
+                    var response = ConstFunctions.Response(ConstMasseges.ServerConst, massege);
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }
                 else
                 {
-                    var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {massege}";
+                    var response = ConstFunctions.Response(ConstMasseges.ServerConst, massege);
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }

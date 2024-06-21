@@ -88,5 +88,17 @@ namespace Server.Const
 
             return ConstMasseges.DeletedRoom;
         }
+
+        public static bool IsPrivateRoom(string roomName)
+        {
+            if (roomName.StartsWith("|private|"))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

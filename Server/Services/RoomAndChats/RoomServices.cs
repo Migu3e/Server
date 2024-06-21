@@ -20,7 +20,7 @@ public class RoomServices : IRoomServices
     
     public async Task ExistingRooms()
     {
-        var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
+        var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
         var rooms = await collection.Find(_ => true).ToListAsync();
 
         foreach (var room in rooms)
@@ -43,9 +43,9 @@ public class RoomServices : IRoomServices
         var room = _chatServer.rooms.FirstOrDefault(r => r.Name == roomName);
         if (room != null)
         {
-            if (roomName == "Main")
+            if (roomName == ConstMasseges.DefaultRoom)
             {
-                _chatServer.ServerPrivateMessage(_chatServer.clients.FirstOrDefault(p => username == p.Username),"Cannot Massage In Room Main");
+                _chatServer.ServerPrivateMessage(_chatServer.clients.FirstOrDefault(p => username == p.Username),ConstMasseges.CannotMessageInMain);
             }
             else
             {
@@ -53,16 +53,16 @@ public class RoomServices : IRoomServices
                 {
                     if (member.Username != username)
                     {
-                        var response = $"<{DateTime.Now} - {username}> {message}";
+                        var response = ConstFunctions.Response(username, message);
 
                         var responseByte = Encoding.UTF8.GetBytes(response);
                         await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                     }
                     
-                    var newResponse = $"<{DateTime.Now} - {username}> {message}\n";
+                    var newResponse = ConstFunctions.Response(username, message);;
                     room.Messages.Add(newResponse);
 
-                    var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
+                    var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
                     var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
                     var update = Builders<RoomDB>.Update.Push(r => r.MList, newResponse);
 
@@ -94,7 +94,7 @@ public class RoomServices : IRoomServices
         Console.WriteLine($"Room {roomName} was created by {client.Username}");
         await _chatServer.PrintToAll(client, $"Room {roomName} was created by {client.Username}");
         
-        var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
+        var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
         var data = new RoomDB
         {
             RoomName = roomName,
@@ -116,7 +116,7 @@ public async Task HandleJoinRoom(IClient client, string message)
     
     if (parts.Length < 3)
     {
-        await _chatServer.PrivateMessage(client, "Incorrect room name or password.");
+        await _chatServer.PrivateMessage(client, ConstMasseges.IncorrectNamePassword);
         return;
     }
 
@@ -124,14 +124,14 @@ public async Task HandleJoinRoom(IClient client, string message)
     string password = parts[2];
     
     // Fetch the room document from MongoDB to get the password and message list (MList)
-    var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
+    var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
     var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
     var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
 
     // Validate the room and password
     if (roomFromDb == null || roomFromDb.Password != password)
     {
-        await _chatServer.PrivateMessage(client, "Incorrect room name or password.");
+        await _chatServer.PrivateMessage(client, ConstMasseges.IncorrectNamePassword);
         return;
     }
 
@@ -181,7 +181,7 @@ public async Task HandleJoinRoom(IClient client, string message)
             _chatServer.rooms.Remove(room);
 
             // Remove the room from the MongoDB collection
-            var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
+            var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
             var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
             await collection.DeleteOneAsync(filter);
             _chatServer.PrintToAll(client, $"Room '{roomName}' has been deleted.");
@@ -203,8 +203,8 @@ public async Task HandleJoinRoom(IClient client, string message)
         {
             await SendMessageToRoom(ConstMasseges.ServerConst, client.Username+ " has left the room " + client.RoomName, client.RoomName);
             _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
-            _chatServer.rooms.FirstOrDefault(r => r.Name == "Main").AddClientToRoom(client);
-            client.RoomName = "Main";
+            _chatServer.rooms.FirstOrDefault(r => r.Name == ConstMasseges.DefaultRoom).AddClientToRoom(client);
+            client.RoomName = ConstMasseges.DefaultRoom;
             await SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
             
         }
@@ -228,19 +228,16 @@ public async Task HandleJoinRoom(IClient client, string message)
             string message = "";
             foreach (var room in _chatServer.rooms)
             {
-                if (room.Name.StartsWith("|private|"))
-                {
-                    
-                }
-                else
+                if (!ConstCheckCommands.IsPrivateRoom(room.Name))
                 {
                     message += $"\nRoom {room.Name}";
                     foreach (var member in room.Members)
                     {
                         message += $"\n| <{member.Username}>" + (member.Username == client.Username ? " (you)" : "");
                     }
-                    message += "\n";
+                    message += "\n";                
                 }
+                
             }
             await _chatServer.ServerPrivateMessage(client, message);
         }

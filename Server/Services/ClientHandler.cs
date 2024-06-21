@@ -82,7 +82,7 @@ public class ClientHandler : ICleintHandler
     public async Task HandleLogout(IClient client, string username)
     {
         await _chatServer.ServerPrivateMessage(client,ConstMasseges.DisconnectedMassege);
-        await _roomServices.SendMessageToRoom(username, "has left the chat", client.RoomName);
+        await _roomServices.SendMessageToRoom(username, ConstMasseges.LeftChat, client.RoomName);
         Console.WriteLine($"{ConstMasseges.ServerConst} - {username} has disconnected");
         _chatServer.clients.Remove(client);
         await _roomServices.LeaveRoom(client);

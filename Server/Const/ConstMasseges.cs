@@ -36,8 +36,17 @@ public class ConstMasseges
     public const string RoomWasCreated = "Room Was Successfully Created";
     public const string UnknownCommand = "An Unknown Command Was Typed, Try /help For More Info";
     public const string DeletedRoom = "The Room Was Deleted Successfully";
+    
+    public const string CannotMessageInMain = "Cannot Massage In Room Main";
+    public const string IncorrectNamePassword = "Incorrect Room Name Or Password, Try Again";
     public const string DatabaseConnection = "mongodb+srv://pc:123123gg123123@cluster0.tjadqzu.mongodb.net/";
     public const string DatabaseName = "chats";
+    public const string CollectionDataClient = "dataclient";    
+    public const string CollectionChats = "chats";
+
+    public const string DefaultRoom = "Main";
+    public const string LeftChat = "Has Left The Chat";
+
 
 
 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Client.MongoDB;
 using MongoDB.Driver;
+using Server.Const;
 using Server.MongoDB;
 
 namespace Server.Services
@@ -59,7 +60,7 @@ namespace Server.Services
                 Console.WriteLine($"Client {client.Username} has joined private room {client.RoomName}");
 
                 // Fetch messages from the MongoDB collection
-                var collection = MongoDBRoomHelper.GetCollection<RoomDB>("chats");
+                var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
                 var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, room.Name);
                 var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
 
