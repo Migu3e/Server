@@ -1,5 +1,6 @@
 // File: Server/MongoDB/MongoDBHelper.cs
 using MongoDB.Driver;
+using Server.Const;
 
 namespace Server.MongoDB
 {
@@ -9,7 +10,7 @@ namespace Server.MongoDB
 
         static MongoDBHelper()
         {
-            var client = new MongoClient("mongodb+srv://pc:123123gg123123@cluster0.tjadqzu.mongodb.net/");
+            var client = new MongoClient(ConstMasseges.DataBaseConnection);
             database = client.GetDatabase("chats");
         }
         

@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using Server.Const;
 
 namespace Server.MongoDB;
 
@@ -9,8 +10,7 @@ public class MongoDBClientHelper
     static MongoDBClientHelper()
     {
         // MongoDB connection string
-        var client = new MongoClient("mongodb+srv://pc:123123gg123123@cluster0.tjadqzu.mongodb.net/");
-            
+        var client = new MongoClient(ConstMasseges.DataBaseConnection);
         // Database name
         database = client.GetDatabase("client");
     }

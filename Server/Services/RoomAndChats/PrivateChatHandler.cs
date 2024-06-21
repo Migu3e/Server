@@ -20,64 +20,69 @@ namespace Server.Services
             _chatServer = server;
             _roomServices = roomServices;
         }
-
-public async Task CreatePrivateChats()
-{
-    try
-    {
-        var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
-        var clientsCollection = MongoDBClientHelper.GetCollection<ClientDB>("dataclient");
-
-        // get all clients from the database
-        var existingClients = await clientsCollection.Find(_ => true).ToListAsync();
-
-        // Log the number of clients fetched
-        Console.WriteLine($"Number of clients fetched: {existingClients.Count}");
-
-        foreach (var existingClient in existingClients)
+        
+        public async Task CreatePrivateChats()
         {
-            Console.WriteLine($"Processing client: {existingClient.UserName}");
-            foreach (var secondClient in existingClients)
+            try
             {
-                if (existingClient.UserName != secondClient.UserName)
+                var collection = MongoDBHelper.GetCollection<RoomDB>("chats");
+                var clientsCollection = MongoDBClientHelper.GetCollection<ClientDB>("dataclient");
+
+                // Get all clients from the database
+                var existingClients = await clientsCollection.Find(_ => true).ToListAsync();
+
+                // Log the number of clients fetched
+                Console.WriteLine($"Number of clients fetched: {existingClients.Count}");
+
+                // Get all existing room names from the database
+                var existingRooms = await collection.Find(_ => true).ToListAsync();
+                var existingRoomNames = existingRooms.Select(r => r.RoomName).ToList();
+
+                // List to accumulate new rooms to be inserted
+                var newRooms = new List<RoomDB>();
+
+                foreach (var existingClient in existingClients)
                 {
-                    string chatName = $"|private|.{existingClient.UserName}.-.{secondClient.UserName}.";
-                    string chatNameSecondWay = $"|private|.{secondClient.UserName}.-.{existingClient.UserName}.";
-
-                    // Check if the room already exists in the database
-                    var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, chatName) |
-                                 Builders<RoomDB>.Filter.Eq(r => r.RoomName, chatNameSecondWay);
-                    var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
-
-                    if (roomFromDb == null)
+                    Console.WriteLine($"Processing client: {existingClient.UserName}");
+                    foreach (var secondClient in existingClients)
                     {
-                        Console.WriteLine($"Creating private chat between {existingClient.UserName} and {secondClient.UserName}");
-                        IRoom privateChat = new Room(chatName);
-                        _chatServer.rooms.Add(privateChat);
-
-                        // Save the room to the database
-                        var data = new RoomDB
+                        if (existingClient.UserName != secondClient.UserName)
                         {
-                            RoomName = chatName,
-                            MList = new List<string>()
-                        };
-                        await collection.InsertOneAsync(data);
+                            string chatName = $"|private|.{existingClient.UserName}.-.{secondClient.UserName}.";
+                            string chatNameSecondWay = $"|private|.{secondClient.UserName}.-.{existingClient.UserName}.";
 
-                        Console.WriteLine($"Private chat '{chatName}' created between {existingClient.UserName} and {secondClient.UserName}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Private chat '{chatName}' or '{chatNameSecondWay}' already exists.");
+                            // Check if the room already exists in the existingRoomNames list
+                            if (!existingRoomNames.Contains(chatName) && !existingRoomNames.Contains(chatNameSecondWay))
+                            {
+                                IRoom privateChat = new Room(chatName);
+                                _chatServer.rooms.Add(privateChat);
+
+                                // Add the new room to the list
+                                newRooms.Add(new RoomDB
+                                {
+                                    RoomName = chatName,
+                                    MList = new List<string>()
+                                });
+
+                                // Add the room names to the list to avoid duplicates
+                                existingRoomNames.Add(chatName);
+                                existingRoomNames.Add(chatNameSecondWay);
+                            }
+                        }
                     }
                 }
+
+                // Perform a batch insertion for all new rooms
+                if (newRooms.Count > 0)
+                {
+                    await collection.InsertManyAsync(newRooms);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
             }
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"An error occurred: {ex.Message}");
-    }
-}
 
         public async Task HandleJoinPrivateRoom(IClient client, string message)
         {
