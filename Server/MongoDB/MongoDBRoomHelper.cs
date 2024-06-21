@@ -1,16 +1,16 @@
-// File: Server/MongoDB/MongoDBHelper.cs
 using MongoDB.Driver;
+using Server.Const;
 
 namespace Server.MongoDB
 {
-    public static class MongoDBHelper
+    public static class MongoDBRoomHelper
     {
         private static IMongoDatabase database;
 
-        static MongoDBHelper()
+        static MongoDBRoomHelper()
         {
-            var client = new MongoClient("mongodb+srv://pc:123123gg123123@cluster0.tjadqzu.mongodb.net/");
-            database = client.GetDatabase("chats");
+            var client = new MongoClient(ConstMasseges.DatabaseConnection);
+            database = client.GetDatabase(ConstMasseges.DatabaseName);
         }
 
         public static IMongoCollection<T> GetCollection<T>(string collectionName)

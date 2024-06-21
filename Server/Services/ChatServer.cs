@@ -46,10 +46,8 @@ namespace Server.Services
             server.Listen();
             Console.WriteLine(ConstMasseges.PortListening);
 
-            IRoom defaultRoom = new Room("Main");
+            IRoom defaultRoom = new Room(ConstMasseges.DefaultRoom);
             rooms.Add(defaultRoom);
-            _roomServices.ExistingRooms();
-            
 
 
             while (true)
@@ -59,13 +57,13 @@ namespace Server.Services
                 var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
                 var username = Encoding.UTF8.GetString(buffer, 0, received).Trim();
 
-                IClient client = new Client(handler, username, defaultRoom.Name);
+                IClient client = new Models.Client(handler, username, defaultRoom.Name);
                 defaultRoom.AddClientToRoom(client);
                 clients.Add(client);
                 await _cleintHandler.UpdatedClientList(client);
-                await _privateChatHandler.CreatePrivateChats(client); // Add this line to create private chats for the new client
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
+                _roomServices.ExistingRooms();
                 await _roomServices.SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
                 _ = Task.Run(() => _cleintHandler.HandleClient(client));
             }
@@ -75,7 +73,7 @@ namespace Server.Services
         public async Task ServerPrivateMessage(IClient client, string message)
         {
 
-            var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {message}";
+            var response = ConstFunctions.Response(ConstMasseges.ServerConst, message);
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
@@ -83,8 +81,8 @@ namespace Server.Services
         public async Task PrivateMessage(IClient client, string message)
         {
 
-            var response = $"{message}";
-            var responseByte = Encoding.UTF8.GetBytes(response);
+            var response = ConstFunctions.Response("", message);
+            var responseByte = Encoding.UTF8.GetBytes(response);    
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
 
@@ -96,13 +94,13 @@ namespace Server.Services
             {
                 if (client.Username == member.Username)
                 {
-                    var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {massege}";
+                    var response = ConstFunctions.Response(ConstMasseges.ServerConst, massege);
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }
                 else
                 {
-                    var response = $"<{DateTime.Now} - {ConstMasseges.ServerConst}> {massege}";
+                    var response = ConstFunctions.Response(ConstMasseges.ServerConst, massege);
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }
