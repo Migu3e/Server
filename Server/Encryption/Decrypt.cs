@@ -17,7 +17,6 @@ public class Decrypt
             {
                 ICryptoTransform transform = tripDes.CreateDecryptor();
                 byte[] result = transform.TransformFinalBlock(data, 0, data.Length);
-                Console.WriteLine(UTF8Encoding.UTF8.GetString(result));
                 finalResult = UTF8Encoding.UTF8.GetString(result);
             }
         }

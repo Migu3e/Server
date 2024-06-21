@@ -17,7 +17,6 @@ public class Encrypt
             {
                 ICryptoTransform transform = tripDes.CreateEncryptor();
                 byte[] result = transform.TransformFinalBlock(data, 0, data.Length);
-                Console.WriteLine(Convert.ToBase64String(result,0,result.Length));
                 finalResult = Convert.ToBase64String(result, 0, result.Length);
             }
         }
