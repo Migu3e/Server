@@ -43,7 +43,10 @@ public class ConstMasseges
     public const string DatabaseName = "chats";
     public const string CollectionDataClient = "dataclient";    
     public const string CollectionChats = "chats";
-
+    
+    
+    public const string JoinPrivateChatWithSelf = "Error: Cannot Join A Private Room With Yourself.";
+    public const string InvalidFormat = "Invalid Message Format.";
     public const string DefaultRoom = "Main";
     public const string LeftChat = "Has Left The Chat";
 

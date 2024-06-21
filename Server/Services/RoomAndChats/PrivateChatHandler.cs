@@ -29,14 +29,14 @@ namespace Server.Services
             var parts = message.Split(' ');
             if (parts.Length < 2)
             {
-                await _chatServer.ServerPrivateMessage(client, "Invalid message format.");
+                await _chatServer.ServerPrivateMessage(client, ConstMasseges.InvalidFormat);
                 return;
             }
 
             string targetUsername = parts[1];
             if (client.Username == targetUsername)
             {
-                await _chatServer.ServerPrivateMessage(client, "Error: Cannot join a private room with yourself.");
+                await _chatServer.ServerPrivateMessage(client, ConstMasseges.JoinPrivateChatWithSelf);
                 return;
             }
 
