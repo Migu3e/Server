@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
+using Chat.Encryption;
 using MongoDB.Driver;
 using Server.Const;
 using Server.Interfaces;
@@ -93,12 +94,12 @@ public class RoomServices : IRoomServices
         _chatServer.rooms.Add(room);
         Console.WriteLine($"Room {roomName} was created by {client.Username}");
         await _chatServer.PrintToAll(client, ConstFunctions.RoomWasCreated(client.Username,roomName));
-        
+        Encrypt encrypt = new Encrypt();
         var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
         var data = new RoomDB
         {
             RoomName = roomName,
-            Password = password,
+            Password = encrypt.encrypt(password),
             MList = new List<string>()
         };
 
@@ -127,9 +128,10 @@ public async Task HandleJoinRoom(IClient client, string message)
     var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
     var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, roomName);
     var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
+    Decrypt decrypt = new Decrypt();
 
     // Validate the room and password
-    if (roomFromDb == null || roomFromDb.Password != password)
+    if (roomFromDb == null || decrypt.decrypt(roomFromDb.Password) != password)
     {
         await _chatServer.PrivateMessage(client, ConstMasseges.IncorrectNamePassword);
         return;
