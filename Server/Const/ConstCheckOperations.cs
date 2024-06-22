@@ -54,5 +54,9 @@ namespace Server.Const
         {
             return message == "/logout";
         }
+        public static bool IsListAll(string message)
+        {
+            return message == "/list all";
+        }
     }
 }

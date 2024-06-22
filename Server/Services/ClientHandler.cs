@@ -1,7 +1,10 @@
 using System.Net.Sockets;
 using System.Text;
+using Client.MongoDB;
+using MongoDB.Driver;
 using Server.Const;
 using Server.Interfaces;
+using Server.MongoDB;
 
 
 namespace Server.Services;
@@ -64,6 +67,7 @@ public class ClientHandler : ICleintHandler
             _ when ConstCheckOperations.IsLeave(message)=> _roomServices.LeaveRoom(client),
             _ when ConstCheckOperations.IsListRooms(message) => _roomServices.PrintRooms(client),
             _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
+            _ when ConstCheckOperations.IsListAll(message) => SendAllClientList(client),
 
             _=> _chatServer.ServerPrivateMessage(client, ConstMasseges.UnknownCommand)
 
@@ -99,6 +103,36 @@ public class ClientHandler : ICleintHandler
         }
         await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
     }
+    
+    
+    public async Task SendAllClientList(IClient client)
+    {
+        string listOfOnlineClients = ConstMasseges.ListOfOnlineClientsAre;
+
+        // Fetch all clients from the dataclient collection
+        var clientsCollection = MongoDBRoomHelper.GetCollection<ClientDB>("dataclient");
+        var allClients = await clientsCollection.Find(_ => true).ToListAsync();
+
+        var onlineClients = _chatServer.clients.Select(c => c.Username).ToHashSet();
+
+        // List of online clients
+        foreach (var currClient in _chatServer.clients)
+        {
+            listOfOnlineClients += $"\n<--> {currClient.Username}" + (currClient.Username == client.Username ? " (you)" : "");
+        }
+
+        // List of offline clients
+        foreach (var clientData in allClients)
+        {
+            if (!onlineClients.Contains(clientData.UserName))
+            {
+                listOfOnlineClients += $"\n<--> {clientData.UserName} (offline)";
+            }
+        }
+
+        await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
+    }
+
 
     public async Task UpdatedClientList(IClient client)
     {
