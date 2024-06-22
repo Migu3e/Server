@@ -27,20 +27,12 @@ public class ClientHandler : ICleintHandler
     Socket handler = client.ClientSocket;
     while (true)
     {
-        var buffer = new byte[1024];
-        var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
-        if (received == 0)
+        var parts = await ConstFunctions.GetNameAndMessageParts(handler);
+        if (parts == null)
         {
             break;
         }
-
-        var receivedString = Encoding.UTF8.GetString(buffer, 0, received);
-        var parts = receivedString.Split('|');
-        if (parts.Length < 2)
-        {
-            continue;
-        }
-
+        
         var username = parts[0];
         var message = parts[1];
         if (!string.IsNullOrEmpty(message))
@@ -48,7 +40,8 @@ public class ClientHandler : ICleintHandler
             await HandleMessage(client, username, message);
         }
     }
-}
+
+} 
 
     public async Task HandleMessage(IClient client, string username, string message)
 {
@@ -108,13 +101,10 @@ public class ClientHandler : ICleintHandler
     {
         var clientsCollection = MongoDBRoomHelper.GetCollection<ClientDB>(ConstMasseges.CollectionDataClient);
         var allClients = await clientsCollection.Find(_ => true).ToListAsync();
-
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
         var allClientNames = allClients.Select(c => c.UserName).ToList();
         var offlineClients = allClientNames.Where(c => !onlineClients.Contains(c)).ToList();
-
         string listOfOnlineClients = ConstFunctions.AllClientListMessage(onlineClients, offlineClients, client.Username);
-
         await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
     }
 

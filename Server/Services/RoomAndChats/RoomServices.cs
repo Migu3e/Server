@@ -202,14 +202,14 @@ public async Task HandleJoinRoom(IClient client, string message)
 
 
     public async Task LeaveRoom(IClient client)
-        {
-            await SendMessageToRoom(ConstMasseges.ServerConst,ConstFunctions.ClientLeftRoom(client.RoomName,client.Username), client.RoomName);
-            _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
-            _chatServer.rooms.FirstOrDefault(r => r.Name == ConstMasseges.DefaultRoom).AddClientToRoom(client);
-            client.RoomName = ConstMasseges.DefaultRoom;
-            await SendMessageToRoom(ConstMasseges.ServerConst, ConstFunctions.ClientJoinedRoom(client.RoomName,client.Username), client.RoomName);
-            
-        }
+    {
+        await SendMessageToRoom(ConstMasseges.ServerConst,ConstFunctions.ClientLeftRoom(client.RoomName,client.Username), client.RoomName);
+        _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName).RemoveClientFromRoom(client);
+        _chatServer.rooms.FirstOrDefault(r => r.Name == ConstMasseges.DefaultRoom).AddClientToRoom(client);
+        client.RoomName = ConstMasseges.DefaultRoom;
+        await SendMessageToRoom(ConstMasseges.ServerConst, ConstFunctions.ClientJoinedRoom(client.RoomName,client.Username), client.RoomName);
+        
+    }
 
     public async Task HandleInviteRoom(IClient client, string message)
     {
@@ -247,24 +247,10 @@ public async Task HandleJoinRoom(IClient client, string message)
     }
 
     public async Task PrintRooms(IClient client)
-        {
-            string message = "";
-            foreach (var room in _chatServer.rooms)
-            {
-                if (!ConstCheckCommands.IsPrivateRoom(room.Name))
-                {
-                    message += $"\nRoom {room.Name}";
-                    foreach (var member in room.Members)
-                    {
-                        message += $"\n| <{member.Username}>" + (member.Username == client.Username ? " (you)" : "");
-                    }
-                    message += "\n";                
-                }
-                
-            }
-            await _chatServer.ServerPrivateMessage(client, message);
-        }
-        
+    {
+        string message = ConstFunctions.GenerateRoomListMessage(_chatServer.rooms, client.Username);
+        await _chatServer.ServerPrivateMessage(client, message);
+    }
         
         
 

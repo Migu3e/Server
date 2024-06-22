@@ -1,3 +1,7 @@
+using System.Net.Sockets;
+using System.Text;
+using Server.Interfaces;
+
 namespace Server.Const;
 
 public static class ConstFunctions
@@ -71,4 +75,67 @@ public static class ConstFunctions
 
         return clientList;
     }
+
+
+    public static async Task<string[]> GetNameAndMessageParts(Socket handler)
+    {
+        var buffer = new byte[1024];
+        int bytesReceived = await handler.ReceiveAsync(buffer, SocketFlags.None);
+
+        // Check if the connection was closed
+        if (bytesReceived == 0)
+        {
+            return null;
+        }
+
+        var receivedString = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
+
+        // Split the received string into parts based on '|'
+        var parts = receivedString.Split('|');
+
+        return parts;
+    }
+    public static string GenerateRoomListMessage(List<IRoom> rooms, string currentUsername)
+    {
+        StringBuilder messageBuilder = new StringBuilder();
+        messageBuilder.AppendLine(ConstMasseges.RoomListHeader);
+
+        foreach (var room in rooms.Where(r => !ConstCheckCommands.IsPrivateRoom(r.Name)))
+        {
+            messageBuilder.AppendLine($"Room {room.Name}");
+            foreach (var member in room.Members)
+            {
+                string memberLine = $"| <{member.Username}>";
+                if (member.Username == currentUsername)
+                {
+                    memberLine += ConstMasseges.YouIndicator;
+                }
+                messageBuilder.AppendLine(memberLine);
+            }
+            messageBuilder.AppendLine();
+        }
+
+        return messageBuilder.ToString();
+    }
+
+
+    public static string UserHasEnteredPrivateChat(string username)
+    {
+        return $"{username} has entered the private chat with you.";
+    }
+
+    public static string UserJoinedPrivateRoom(string username, string roomName)
+    {
+        return $"{username} has joined the private room {roomName}.";
+    }
+
+    public static string RoomDoesNotExist(string targetUsername)
+    {
+        return $"Room with {targetUsername} doesn't exist.";
+    }
+    
+
+
+
+
 }

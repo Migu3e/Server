@@ -52,7 +52,11 @@ public class ConstMasseges
     public const string ClientIsOffline = "Error: The Client Is Not Online Or Dosent Exist, And Cannot Be Invited.";
     public const string ListOfOnline = "\n--------------------------------\nList Of Online Clients Are:\n--------------------------------";
     public const string ListOfOffline = "\n\n--------------------------------\nList Of Offline Clients Are:\n--------------------------------";
-
+    
+    public const string RoomListHeader = "List of Rooms:";
+    public const string YouIndicator = " (you)";
+    
+    
 
 
 
