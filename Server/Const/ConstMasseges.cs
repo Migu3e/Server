@@ -6,8 +6,8 @@ public class ConstMasseges
     public const string HelpMessage = "The commands are:\n" +
                                       "/list - Display the connected users\n" +
                                       "/logout - Disconnect from the server\n" +
-                                      "/croom <roomname> <roompassword>- Create a new room with the specified name\n" +
-                                      "/jroom <roomname> - Join an existing room with the specified name\n" +
+                                      "/croom <roomname> <roompassword> - Create a new room with the specified name\n" +
+                                      "/jroom <roomname> <roompassword> - Join an existing room with the specified name\n" +
                                       "/iroom <username> <roomname> - Invite a user to a specified room\n" +
                                       "/leave - Leave the current room and return to the main room\n" +
                                       "/list rooms - List all rooms and their members\n" +
@@ -50,6 +50,9 @@ public class ConstMasseges
     public const string DefaultRoom = "Main";
     public const string LeftChat = "Has Left The Chat";
     public const string ClientIsOffline = "Error: The Client Is Not Online Or Dosent Exist, And Cannot Be Invited.";
+    public const string ListOfOnline = "\n--------------------------------\nList Of Online Clients Are:\n--------------------------------";
+    public const string ListOfOffline = "\n\n--------------------------------\nList Of Offline Clients Are:\n--------------------------------";
+
 
 
 

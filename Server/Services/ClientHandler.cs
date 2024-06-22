@@ -1,7 +1,10 @@
 using System.Net.Sockets;
 using System.Text;
+using Client.MongoDB;
+using MongoDB.Driver;
 using Server.Const;
 using Server.Interfaces;
+using Server.MongoDB;
 
 
 namespace Server.Services;
@@ -64,6 +67,7 @@ public class ClientHandler : ICleintHandler
             _ when ConstCheckOperations.IsLeave(message)=> _roomServices.LeaveRoom(client),
             _ when ConstCheckOperations.IsListRooms(message) => _roomServices.PrintRooms(client),
             _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
+            _ when ConstCheckOperations.IsListAll(message) => SendAllClientList(client),
 
             _=> _chatServer.ServerPrivateMessage(client, ConstMasseges.UnknownCommand)
 
@@ -90,24 +94,38 @@ public class ClientHandler : ICleintHandler
         client.ClientSocket.Close();
     }
 
+
     public async Task SendClientList(IClient client)
     {
-        string listOfOnlineClients = ConstMasseges.ListOfOnlineClientsAre;
-        foreach (var currClient in _chatServer.clients)
-        {
-            listOfOnlineClients += $"\n<--> {currClient.Username}" + (currClient.Username == client.Username ? " (you)" : "");
-        }
+        var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
+        string listOfOnlineClients = ConstFunctions.ClientListMessage(onlineClients, client.Username);
         await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
     }
 
+    
+    
+    public async Task SendAllClientList(IClient client)
+    {
+        var clientsCollection = MongoDBRoomHelper.GetCollection<ClientDB>(ConstMasseges.CollectionDataClient);
+        var allClients = await clientsCollection.Find(_ => true).ToListAsync();
+
+        var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
+        var allClientNames = allClients.Select(c => c.UserName).ToList();
+        var offlineClients = allClientNames.Where(c => !onlineClients.Contains(c)).ToList();
+
+        string listOfOnlineClients = ConstFunctions.AllClientListMessage(onlineClients, offlineClients, client.Username);
+
+        await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
+    }
+
+
+
     public async Task UpdatedClientList(IClient client)
     {
-        string listOfOnlineClients = ConstMasseges.ListOfOnlineClientsChanges;
-        foreach (var currClient in _chatServer.clients)
-        {
-            listOfOnlineClients += $"<--> {currClient.Username}" + (currClient.Username == client.Username ? " (Just Joined)\n" : "\n");
-        }
+        var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
+        string listOfOnlineClients = ConstFunctions.UpdatedClientListMessage(onlineClients, client.Username);
         await _chatServer.PrintToAll(client, listOfOnlineClients);
     }
+
 
 }
