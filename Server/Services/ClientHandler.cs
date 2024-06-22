@@ -110,7 +110,7 @@ public class ClientHandler : ICleintHandler
         string listOfOnlineClients = ConstMasseges.ListOfOnlineClientsAre;
 
         // Fetch all clients from the dataclient collection
-        var clientsCollection = MongoDBRoomHelper.GetCollection<ClientDB>("dataclient");
+        var clientsCollection = MongoDBRoomHelper.GetCollection<ClientDB>(ConstMasseges.CollectionDataClient);
         var allClients = await clientsCollection.Find(_ => true).ToListAsync();
 
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToHashSet();
@@ -121,6 +121,7 @@ public class ClientHandler : ICleintHandler
             listOfOnlineClients += $"\n<--> {currClient.Username}" + (currClient.Username == client.Username ? " (you)" : "");
         }
 
+        listOfOnlineClients += "\n";
         // List of offline clients
         foreach (var clientData in allClients)
         {
