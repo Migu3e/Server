@@ -1,6 +1,6 @@
 namespace Server.Const;
 
-public class ConstFunctions
+public static class ConstFunctions
 {
     public static string Response(string username,string message)
     {
@@ -31,5 +31,44 @@ public class ConstFunctions
     {
         return $"{clientName} has invited you to join room {roomName}.";
     }
-    
+    public static string AllClientListMessage(List<string> onlineClients, List<string> offlineClients, string currentUser)
+    {
+        string clientList = ConstMasseges.ListOfOnline;
+
+        foreach (var client in onlineClients)
+        {
+            clientList += $"\n<--> {client}" + (client == currentUser ? " (you)" : "");
+        }
+
+        clientList += ConstMasseges.ListOfOffline;
+
+        foreach (var client in offlineClients)
+        {
+            clientList += $"\n<--> {client} (offline)";
+        }
+
+        return clientList;
+    }
+    public static string UpdatedClientListMessage(List<string> onlineClients, string newClient)
+    {
+        string clientList = ConstMasseges.ListOfOnlineClientsChanges;
+
+        foreach (var client in onlineClients)
+        {
+            clientList += $"<--> {client}" + (client == newClient ? " (Just Joined)\n" : "\n");
+        }
+
+        return clientList;
+    }
+    public static string ClientListMessage(List<string> onlineClients, string currentUser)
+    {
+        string clientList = ConstMasseges.ListOfOnlineClientsAre;
+
+        foreach (var client in onlineClients)
+        {
+            clientList += $"\n<--> {client}" + (client == currentUser ? " (you)" : "");
+        }
+
+        return clientList;
+    }
 }
