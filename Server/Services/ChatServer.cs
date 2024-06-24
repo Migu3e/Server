@@ -3,7 +3,11 @@ using System.Net.Sockets;
 using System.Text;
 using Server.Const;
 using Server.Interfaces;
+using Server.Interfaces.ClientHandler;
+using Server.Interfaces.RoomsAndChats;
 using Server.Models;
+using Server.Services.RoomAndChats;
+using Server.Services.RoomAndChats.Rooms;
 
 namespace Server.Services
 {
@@ -32,7 +36,7 @@ namespace Server.Services
             _roomServices = new RoomServices(this);
             _messageFormatter = new MessageFormatter();
             _privateChatHandler = new PrivateChatHandler(this,_roomServices);
-            _cleintHandler = new ClientHandler(this,_roomServices,_privateChatHandler);
+            _cleintHandler = new ClientHandler.ClientHandler(this,_roomServices,_privateChatHandler);
         }
 
         public List<IClient> clients { get; set; }
@@ -68,7 +72,6 @@ namespace Server.Services
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
                 _roomServices.ExistingRooms();
-                await _roomServices.SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
                 _ = Task.Run(() => _cleintHandler.HandleClient(client));
             }
 

@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace Chat.Encryption;
+namespace Server.Encryption;
 
 public class Decrypt
 {

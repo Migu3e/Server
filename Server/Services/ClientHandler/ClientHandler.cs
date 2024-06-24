@@ -1,13 +1,12 @@
 using System.Net.Sockets;
-using System.Text;
-using Client.MongoDB;
 using MongoDB.Driver;
 using Server.Const;
 using Server.Interfaces;
+using Server.Interfaces.ClientHandler;
+using Server.Interfaces.RoomsAndChats;
 using Server.MongoDB;
 
-
-namespace Server.Services;
+namespace Server.Services.ClientHandler;
 
 public class ClientHandler : ICleintHandler
 {

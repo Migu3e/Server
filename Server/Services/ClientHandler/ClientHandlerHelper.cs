@@ -1,8 +1,8 @@
 using System.Net.Sockets;
 using System.Text;
-using Server.Interfaces;
+using Server.Interfaces.ClientHandler;
 
-namespace Server.Services;
+namespace Server.Services.ClientHandler;
 
 public class ClientHandlerHelper : IClientHandlerHelper
 {

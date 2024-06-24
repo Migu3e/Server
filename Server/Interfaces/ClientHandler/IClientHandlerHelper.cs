@@ -1,6 +1,6 @@
 using System.Net.Sockets;
 
-namespace Server.Interfaces;
+namespace Server.Interfaces.ClientHandler;
 
 public interface IClientHandlerHelper
 {

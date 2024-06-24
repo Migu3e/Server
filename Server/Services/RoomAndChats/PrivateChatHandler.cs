@@ -1,10 +1,8 @@
-using Server.Interfaces;
-using MongoDB.Driver;
 using Server.Const;
-using Server.MongoDB;
-using Server.Helpers;
+using Server.Interfaces;
+using Server.Interfaces.RoomsAndChats;
 
-namespace Server.Services
+namespace Server.Services.RoomAndChats
 {
     public class PrivateChatHandler : IPrivateChatHandler
     {
