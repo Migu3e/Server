@@ -3,7 +3,11 @@ using System.Net.Sockets;
 using System.Text;
 using Server.Const;
 using Server.Interfaces;
+using Server.Interfaces.ClientHandler;
+using Server.Interfaces.RoomsAndChats;
 using Server.Models;
+using Server.Services.RoomAndChats;
+using Server.Services.RoomAndChats.Rooms;
 
 namespace Server.Services
 {
@@ -14,6 +18,7 @@ namespace Server.Services
             _cleintHandler = cleintHandler;
             _roomServices = roomServices;
             _privateChatHandler = privateChatHandler;
+            _messageFormatter = new MessageFormatter();
             clients = new List<IClient>();
             rooms = new List<IRoom>();
         }
@@ -21,14 +26,17 @@ namespace Server.Services
         private ICleintHandler _cleintHandler;
         private IRoomServices _roomServices;
         private IPrivateChatHandler _privateChatHandler;
+        private IMessageFormatter _messageFormatter;
+
 
         public ChatServer()
         {
             clients = new List<IClient>();
             rooms = new List<IRoom>();
             _roomServices = new RoomServices(this);
+            _messageFormatter = new MessageFormatter();
             _privateChatHandler = new PrivateChatHandler(this,_roomServices);
-            _cleintHandler = new ClientHandler(this,_roomServices,_privateChatHandler);
+            _cleintHandler = new ClientHandler.ClientHandler(this,_roomServices,_privateChatHandler);
         }
 
         public List<IClient> clients { get; set; }
@@ -64,7 +72,6 @@ namespace Server.Services
 
                 Console.WriteLine($"The client {client.Username} has connected to the server");
                 _roomServices.ExistingRooms();
-                await _roomServices.SendMessageToRoom(ConstMasseges.ServerConst, $"{client.Username} has joined the room {client.RoomName}", client.RoomName);
                 _ = Task.Run(() => _cleintHandler.HandleClient(client));
             }
 
@@ -73,7 +80,7 @@ namespace Server.Services
         public async Task ServerPrivateMessage(IClient client, string message)
         {
 
-            var response = ConstFunctions.Response(ConstMasseges.ServerConst, message);
+            var response = _messageFormatter.Response(ConstMasseges.ServerConst, message);
             var responseByte = Encoding.UTF8.GetBytes(response);
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
@@ -81,8 +88,15 @@ namespace Server.Services
         public async Task PrivateMessage(IClient client, string message)
         {
 
-            var response = ConstFunctions.Response("", message);
+            var response = _messageFormatter.Response("", message);
             var responseByte = Encoding.UTF8.GetBytes(response);    
+            await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
+        }
+        public async Task LoadMessages(IClient client, string message)
+        {
+
+
+            var responseByte = Encoding.UTF8.GetBytes(message);    
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
 
@@ -94,13 +108,13 @@ namespace Server.Services
             {
                 if (client.Username == member.Username)
                 {
-                    var response = ConstFunctions.Response(ConstMasseges.ServerConst, massege);
+                    var response = _messageFormatter.Response(ConstMasseges.ServerConst, massege);
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }
                 else
                 {
-                    var response = ConstFunctions.Response(ConstMasseges.ServerConst, massege);
+                    var response = _messageFormatter.Response(ConstMasseges.ServerConst, massege);
                     var responseByte = Encoding.UTF8.GetBytes(response);
                     await member.ClientSocket.SendAsync(responseByte, SocketFlags.None);
                 }

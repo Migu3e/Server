@@ -10,5 +10,6 @@
         Task PrivateMessage(IClient client, string message);
         Task ServerPrivateMessage(IClient client, string message);
         Task PrintToAll(IClient client, string massege);
+        Task LoadMessages(IClient client, string message);
     }
 }

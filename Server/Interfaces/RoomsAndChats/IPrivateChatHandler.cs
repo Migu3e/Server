@@ -1,4 +1,4 @@
-namespace Server.Interfaces;
+namespace Server.Interfaces.RoomsAndChats;
 
 public interface IPrivateChatHandler
 {

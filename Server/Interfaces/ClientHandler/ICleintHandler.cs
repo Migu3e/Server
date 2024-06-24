@@ -1,4 +1,4 @@
-namespace Server.Interfaces;
+namespace Server.Interfaces.ClientHandler;
 
 public interface ICleintHandler
 {

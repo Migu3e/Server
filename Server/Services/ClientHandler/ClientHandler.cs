@@ -1,13 +1,12 @@
 using System.Net.Sockets;
-using System.Text;
-using Client.MongoDB;
 using MongoDB.Driver;
 using Server.Const;
 using Server.Interfaces;
+using Server.Interfaces.ClientHandler;
+using Server.Interfaces.RoomsAndChats;
 using Server.MongoDB;
 
-
-namespace Server.Services;
+namespace Server.Services.ClientHandler;
 
 public class ClientHandler : ICleintHandler
 {
@@ -16,31 +15,28 @@ public class ClientHandler : ICleintHandler
         _chatServer = chatServer;
         _roomServices = roomServices;
         _privateChatHandler = privateChatHandler;
+        _messageFormatter = new MessageFormatter();
+        _clientHandlerHelper = new ClientHandlerHelper();
     }
 
     private IChatServer _chatServer;
     private IRoomServices _roomServices;
     private IPrivateChatHandler _privateChatHandler;
+    private IMessageFormatter _messageFormatter;
+    private IClientHandlerHelper _clientHandlerHelper;
+
     
     public async Task HandleClient(IClient client)
 {
     Socket handler = client.ClientSocket;
     while (true)
     {
-        var buffer = new byte[1024];
-        var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
-        if (received == 0)
+        var parts = await _clientHandlerHelper.GetNameAndMessageParts(handler);
+        if (parts == null)
         {
             break;
         }
-
-        var receivedString = Encoding.UTF8.GetString(buffer, 0, received);
-        var parts = receivedString.Split('|');
-        if (parts.Length < 2)
-        {
-            continue;
-        }
-
+        
         var username = parts[0];
         var message = parts[1];
         if (!string.IsNullOrEmpty(message))
@@ -48,7 +44,8 @@ public class ClientHandler : ICleintHandler
             await HandleMessage(client, username, message);
         }
     }
-}
+
+} 
 
     public async Task HandleMessage(IClient client, string username, string message)
 {
@@ -69,7 +66,7 @@ public class ClientHandler : ICleintHandler
             _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
             _ when ConstCheckOperations.IsListAll(message) => SendAllClientList(client),
 
-            _=> _chatServer.ServerPrivateMessage(client, ConstMasseges.UnknownCommand)
+            _=> _roomServices.SendMessageToRoom(client.Username,message,client.RoomName)
 
         });
     }
@@ -98,7 +95,7 @@ public class ClientHandler : ICleintHandler
     public async Task SendClientList(IClient client)
     {
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
-        string listOfOnlineClients = ConstFunctions.ClientListMessage(onlineClients, client.Username);
+        string listOfOnlineClients = _messageFormatter.ClientListMessage(onlineClients, client.Username);
         await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
     }
 
@@ -108,13 +105,10 @@ public class ClientHandler : ICleintHandler
     {
         var clientsCollection = MongoDBRoomHelper.GetCollection<ClientDB>(ConstMasseges.CollectionDataClient);
         var allClients = await clientsCollection.Find(_ => true).ToListAsync();
-
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
         var allClientNames = allClients.Select(c => c.UserName).ToList();
         var offlineClients = allClientNames.Where(c => !onlineClients.Contains(c)).ToList();
-
-        string listOfOnlineClients = ConstFunctions.AllClientListMessage(onlineClients, offlineClients, client.Username);
-
+        string listOfOnlineClients = _messageFormatter.AllClientListMessage(onlineClients, offlineClients, client.Username);
         await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
     }
 
@@ -123,7 +117,7 @@ public class ClientHandler : ICleintHandler
     public async Task UpdatedClientList(IClient client)
     {
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
-        string listOfOnlineClients = ConstFunctions.UpdatedClientListMessage(onlineClients, client.Username);
+        string listOfOnlineClients = _messageFormatter.UpdatedClientListMessage(onlineClients, client.Username);
         await _chatServer.PrintToAll(client, listOfOnlineClients);
     }
 
