@@ -5,6 +5,7 @@ public class ConstMasseges
     public const string PortListening = "Server Has Started Listening To Port 1234";
     public const string HelpMessage = "The commands are:\n" +
                                       "/list - Display the connected users\n" +
+                                      "/list all - Display the connected users and the offline users\n" +
                                       "/logout - Disconnect from the server\n" +
                                       "/croom <roomname> <roompassword> - Create a new room with the specified name\n" +
                                       "/jroom <roomname> <roompassword> - Join an existing room with the specified name\n" +

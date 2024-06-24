@@ -16,18 +16,23 @@ public class ClientHandler : ICleintHandler
         _chatServer = chatServer;
         _roomServices = roomServices;
         _privateChatHandler = privateChatHandler;
+        _messageFormatter = new MessageFormatter();
+        _clientHandlerHelper = new ClientHandlerHelper();
     }
 
     private IChatServer _chatServer;
     private IRoomServices _roomServices;
     private IPrivateChatHandler _privateChatHandler;
+    private IMessageFormatter _messageFormatter;
+    private IClientHandlerHelper _clientHandlerHelper;
+
     
     public async Task HandleClient(IClient client)
 {
     Socket handler = client.ClientSocket;
     while (true)
     {
-        var parts = await ConstFunctions.GetNameAndMessageParts(handler);
+        var parts = await _clientHandlerHelper.GetNameAndMessageParts(handler);
         if (parts == null)
         {
             break;
@@ -62,7 +67,7 @@ public class ClientHandler : ICleintHandler
             _ when ConstCheckOperations.IsPrivate(message) => _privateChatHandler.HandleJoinPrivateRoom(client, message),
             _ when ConstCheckOperations.IsListAll(message) => SendAllClientList(client),
 
-            _=> _chatServer.ServerPrivateMessage(client, ConstMasseges.UnknownCommand)
+            _=> _roomServices.SendMessageToRoom(client.Username,message,client.RoomName)
 
         });
     }
@@ -91,7 +96,7 @@ public class ClientHandler : ICleintHandler
     public async Task SendClientList(IClient client)
     {
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
-        string listOfOnlineClients = ConstFunctions.ClientListMessage(onlineClients, client.Username);
+        string listOfOnlineClients = _messageFormatter.ClientListMessage(onlineClients, client.Username);
         await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
     }
 
@@ -104,7 +109,7 @@ public class ClientHandler : ICleintHandler
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
         var allClientNames = allClients.Select(c => c.UserName).ToList();
         var offlineClients = allClientNames.Where(c => !onlineClients.Contains(c)).ToList();
-        string listOfOnlineClients = ConstFunctions.AllClientListMessage(onlineClients, offlineClients, client.Username);
+        string listOfOnlineClients = _messageFormatter.AllClientListMessage(onlineClients, offlineClients, client.Username);
         await _chatServer.ServerPrivateMessage(client, listOfOnlineClients);
     }
 
@@ -113,7 +118,7 @@ public class ClientHandler : ICleintHandler
     public async Task UpdatedClientList(IClient client)
     {
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
-        string listOfOnlineClients = ConstFunctions.UpdatedClientListMessage(onlineClients, client.Username);
+        string listOfOnlineClients = _messageFormatter.UpdatedClientListMessage(onlineClients, client.Username);
         await _chatServer.PrintToAll(client, listOfOnlineClients);
     }
 

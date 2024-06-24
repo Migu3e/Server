@@ -1,10 +1,8 @@
-// File: Server/Services/PrivateChatHandler.cs
-
 using Server.Interfaces;
-
 using MongoDB.Driver;
 using Server.Const;
 using Server.MongoDB;
+using Server.Helpers;
 
 namespace Server.Services
 {
@@ -12,11 +10,15 @@ namespace Server.Services
     {
         private readonly IChatServer _chatServer;
         private readonly IRoomServices _roomServices;
+        private readonly IMessageFormatter _messageFormatter;
+        private readonly IPrivateChatHelper _privateChatHelper;
 
         public PrivateChatHandler(IChatServer server, IRoomServices roomServices)
         {
             _chatServer = server;
             _roomServices = roomServices;
+            _messageFormatter = new MessageFormatter();
+            _privateChatHelper = new PrivateChatHelper(_chatServer, _roomServices, _messageFormatter);
         }
         
         public async Task HandleJoinPrivateRoom(IClient client, string message)
@@ -38,55 +40,14 @@ namespace Server.Services
             var room = _chatServer.rooms.FirstOrDefault(r => r.Name.Contains($".{targetUsername}.") && r.Name.Contains($".{client.Username}."));
             if (room != null)
             {
-                await LeaveCurrentRoom(client);
-                await NotifyTargetUser(targetUsername, client.Username);
-                await JoinRoom(client, room, targetUsername);
+                await _privateChatHelper.LeaveCurrentRoom(client);
+                await _privateChatHelper.NotifyTargetUser(targetUsername, client.Username);
+                await _privateChatHelper.JoinRoom(client, room, targetUsername);
             }
             else
             {
-                await _chatServer.ServerPrivateMessage(client, ConstFunctions.RoomDoesNotExist(targetUsername));
+                await _chatServer.ServerPrivateMessage(client, _messageFormatter.RoomDoesNotExist(targetUsername));
             }
         }
-
-        private async Task LeaveCurrentRoom(IClient client)
-        {
-            var currentRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName);
-            if (currentRoom != null)
-            {
-                currentRoom.RemoveClientFromRoom(client);
-                Console.WriteLine($"Client {client.Username} has left room {client.RoomName}");
-            }
-        }
-
-        private async Task NotifyTargetUser(string targetUsername, string clientUsername)
-        {
-            foreach (var newClient in _chatServer.clients.Where(c => c.Username == targetUsername))
-            {
-                await _chatServer.ServerPrivateMessage(newClient, ConstFunctions.UserHasEnteredPrivateChat(clientUsername));
-            }
-        }
-
-        private async Task JoinRoom(IClient client, IRoom room, string targetUsername)
-        {
-            room.AddClientToRoom(client);
-            client.RoomName = room.Name;
-            Console.WriteLine($"Client {client.Username} has joined private room {client.RoomName}");
-
-            // Fetch messages from the MongoDB collection
-            var collection = MongoDBRoomHelper.GetCollection<RoomDB>(ConstMasseges.CollectionChats);
-            var filter = Builders<RoomDB>.Filter.Eq(r => r.RoomName, room.Name);
-            var roomFromDb = await collection.Find(filter).FirstOrDefaultAsync();
-            if (roomFromDb != null)
-            {
-                foreach (var existingMessage in roomFromDb.MList)
-                {
-                    await _chatServer.PrivateMessage(client, existingMessage);
-                }
-            }
-
-            await _roomServices.SendMessageToRoom(ConstMasseges.ServerConst, ConstFunctions.UserJoinedPrivateRoom(client.Username, client.RoomName), client.RoomName);
-        }
-
-
     }
 }
