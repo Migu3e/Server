@@ -72,7 +72,7 @@ namespace Server.Services.RoomAndChats.Rooms
 
             if (validationMessage != ConstMasseges.RoomWasCreated)
             {
-                await _chatServer.PrivateMessage(client, validationMessage);
+                await _chatServer.SendPrivateMessage(client, validationMessage);
                 return;
             }
 
@@ -94,7 +94,7 @@ namespace Server.Services.RoomAndChats.Rooms
             var parts = message.Split(' ');
             if (parts.Length < 3)
             {
-                await _chatServer.PrivateMessage(client, ConstMasseges.IncorrectNamePassword);
+                await _chatServer.SendPrivateMessage(client, ConstMasseges.IncorrectNamePassword);
                 return;
             }
 
@@ -104,7 +104,7 @@ namespace Server.Services.RoomAndChats.Rooms
 
             if (roomFromDb == null || new Decrypt().decrypt(roomFromDb.Password) != password)
             {
-                await _chatServer.PrivateMessage(client, ConstMasseges.IncorrectNamePassword);
+                await _chatServer.SendPrivateMessage(client, ConstMasseges.IncorrectNamePassword);
                 return;
             }
 
@@ -113,7 +113,7 @@ namespace Server.Services.RoomAndChats.Rooms
 
             if (validationMessage != "true")
             {
-                await _chatServer.PrivateMessage(client, validationMessage);
+                await _chatServer.SendPrivateMessage(client, validationMessage);
                 return;
             }
 
@@ -168,7 +168,7 @@ namespace Server.Services.RoomAndChats.Rooms
             var parts = message.Split(' ');
             if (parts.Length < 3)
             {
-                await _chatServer.PrivateMessage(client, ConstMasseges.InvalidFormat);
+                await _chatServer.SendPrivateMessage(client, ConstMasseges.InvalidFormat);
                 return;
             }
 
@@ -177,7 +177,7 @@ namespace Server.Services.RoomAndChats.Rooms
 
             if (ConstCheckCommands.CanInviteToRoom(message, client) != "true")
             {
-                await _chatServer.PrivateMessage(client, ConstCheckCommands.CanInviteToRoom(message, client));
+                await _chatServer.SendPrivateMessage(client, ConstCheckCommands.CanInviteToRoom(message, client));
                 return;
             }
 
@@ -185,11 +185,11 @@ namespace Server.Services.RoomAndChats.Rooms
             if (invitedClient != null)
             {
                 await _chatServer.ServerPrivateMessage(invitedClient, _messageFormatter.InviteToRoomMessege(roomName, client.Username));
-                await _chatServer.PrivateMessage(client, _messageFormatter.InviteToRoom(roomName, invitedUsername));
+                await _chatServer.SendPrivateMessage(client, _messageFormatter.InviteToRoom(roomName, invitedUsername));
             }
             else
             {
-                await _chatServer.PrivateMessage(client, ConstMasseges.ClientIsOffline);
+                await _chatServer.SendPrivateMessage(client, ConstMasseges.ClientIsOffline);
             }
         }
 

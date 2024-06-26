@@ -85,7 +85,7 @@ namespace Server.Services
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
         
-        public async Task PrivateMessage(IClient client, string message)
+        public async Task SendPrivateMessage(IClient client, string message)
         {
 
             var response = _messageFormatter.Response("", message);

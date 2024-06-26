@@ -50,7 +50,7 @@ namespace Server.Services.RoomAndChats
             {
                 foreach (var existingMessage in roomFromDb.MList)
                 {
-                    await _chatServer.PrivateMessage(client, existingMessage);
+                    await _chatServer.SendPrivateMessage(client, existingMessage);
                 }
             }
 

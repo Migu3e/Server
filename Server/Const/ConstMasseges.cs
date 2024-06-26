@@ -1,6 +1,6 @@
 namespace Server.Const;
 
-public class ConstMasseges
+public static class ConstMasseges
 {
     public const string PortListening = "Server Has Started Listening To Port 1234";
     public const string HelpMessage = "The commands are:\n" +

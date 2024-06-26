@@ -84,7 +84,6 @@ public class ClientHandler : ICleintHandler
     {
         await _chatServer.ServerPrivateMessage(client,ConstMasseges.DisconnectedMassege);
         await _roomServices.SendMessageToRoom(username, ConstMasseges.LeftChat, client.RoomName);
-        Console.WriteLine($"{ConstMasseges.ServerConst} - {username} has disconnected");
         _chatServer.clients.Remove(client);
         await _roomServices.LeaveRoom(client);
         client.ClientSocket.Shutdown(SocketShutdown.Both);
