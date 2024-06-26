@@ -1,13 +1,5 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Server.Services;
 
-namespace MyNamespace
-{
-    public class Server
-    {
-        public static void Main()
-        {
-            Console.WriteLine("hello");
-        }
-    
-    }
-}
+var chatServer = new ChatServer();
+await chatServer.StartAsync();
+
