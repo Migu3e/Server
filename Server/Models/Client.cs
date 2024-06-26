@@ -1,9 +1,9 @@
-﻿using System.Net.Sockets;
+using System.Net.Sockets;
 using Server.Interfaces;
 
 namespace Server.Models
 {
-    public class Client : IClient
+    public class Client 
     {
         public Socket ClientSocket { get; private set; }
         public string Username { get; private set; }

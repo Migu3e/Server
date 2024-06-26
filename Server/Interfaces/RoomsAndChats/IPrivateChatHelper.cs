@@ -1,8 +1,10 @@
+using Server.Models;
+
 namespace Server.Interfaces.RoomsAndChats;
 
 public interface IPrivateChatHelper
 {
-    Task LeaveCurrentRoom(IClient client);
+    Task LeaveCurrentRoom(Client client);
     Task NotifyTargetUser(string targetUsername, string clientUsername);
-    Task JoinRoom(IClient client, IRoom room, string targetUsername);
+    Task JoinRoom(Client client, Room room, string targetUsername);
 }

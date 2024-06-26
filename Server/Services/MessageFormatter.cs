@@ -1,6 +1,7 @@
 using System.Text;
 using Server.Const;
 using Server.Interfaces;
+using Server.Models;
 
 namespace Server.Services;
 
@@ -84,7 +85,7 @@ public class MessageFormatter : IMessageFormatter
         return clientList;
     }
 
-    public string GenerateRoomListMessage(List<IRoom> rooms, string currentUsername)
+    public string GenerateRoomListMessage(List<Room> rooms, string currentUsername)
     {
         StringBuilder messageBuilder = new StringBuilder();
         messageBuilder.AppendLine(ConstMasseges.RoomListHeader);

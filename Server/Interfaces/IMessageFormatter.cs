@@ -1,3 +1,5 @@
+using Server.Models;
+
 namespace Server.Interfaces;
 
 public interface IMessageFormatter
@@ -19,7 +21,7 @@ public interface IMessageFormatter
     string UpdatedClientListMessage(List<string> onlineClients, string newClient);
     string ClientListMessage(List<string> onlineClients, string currentUser);
     
-    string GenerateRoomListMessage(List<IRoom> rooms, string currentUsername);
+    string GenerateRoomListMessage(List<Room> rooms, string currentUsername);
     
     string UserHasEnteredPrivateChat(string username);
 

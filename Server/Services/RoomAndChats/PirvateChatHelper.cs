@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using Server.Const;
+using Server.Models;
 using Server.Interfaces;
 using Server.Interfaces.RoomsAndChats;
 using Server.MongoDB;
@@ -19,7 +20,7 @@ namespace Server.Services.RoomAndChats
             _messageFormatter = messageFormatter;
         }
 
-        public async Task LeaveCurrentRoom(IClient client)
+        public async Task LeaveCurrentRoom(Client client)
         {
             var currentRoom = _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName);
             if (currentRoom != null)
@@ -37,7 +38,7 @@ namespace Server.Services.RoomAndChats
             }
         }
 
-        public async Task JoinRoom(IClient client, IRoom room, string targetUsername)
+        public async Task JoinRoom(Client client, Room room, string targetUsername)
         {
             room.AddClientToRoom(client);
             client.RoomName = room.Name;

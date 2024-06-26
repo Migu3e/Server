@@ -7,7 +7,7 @@ namespace Server.Const
 {
     public static class ConstCheckCommands
     {
-        public static string CanCreateRoom(string message, List<IRoom> rooms)
+        public static string CanCreateRoom(string message, List<Room> rooms)
         {
 
             var parts = message.Split(' ');
@@ -25,7 +25,7 @@ namespace Server.Const
             return ConstMasseges.RoomWasCreated;
         }
 
-        public static string CanJoinRoom(string message, IRoom? room)
+        public static string CanJoinRoom(string message, Room? room)
         {
             var parts = message.Split(' ');
 
@@ -47,7 +47,7 @@ namespace Server.Const
             return "true";
         }
 
-        public static string CanInviteToRoom(string message, IClient? room)
+        public static string CanInviteToRoom(string message, Client? room)
         {
             var parts = message.Split(' ');
 
@@ -64,7 +64,7 @@ namespace Server.Const
             return "true";
         }
 
-        public static string CanDeleteRoom(string message, List<IRoom> rooms)
+        public static string CanDeleteRoom(string message, List<Room> rooms)
         {
             var parts = message.Split(' ');
 

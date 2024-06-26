@@ -36,7 +36,7 @@ namespace Server.Services.RoomAndChats.Rooms
 
         public async Task SendMessageToRoom(string username, string message, string roomName)
         {
-            IClient client = _chatServer.clients.FirstOrDefault(p => username == p.Username);
+            Client client = _chatServer.clients.FirstOrDefault(p => username == p.Username);
             var room = _chatServer.rooms.FirstOrDefault(r => r.Name == roomName);
             if (room == null)
             {
@@ -65,7 +65,7 @@ namespace Server.Services.RoomAndChats.Rooms
             await _roomRepository.UpdateRoomMessages(roomName, response);
         }
 
-        public async Task HandleCreateRoom(IClient client, string message)
+        public async Task HandleCreateRoom(Client client, string message)
         {
             var parts = message.Split(' ');
             var validationMessage = ConstCheckCommands.CanCreateRoom(message, _chatServer.rooms);
@@ -89,7 +89,7 @@ namespace Server.Services.RoomAndChats.Rooms
             await _roomRepository.InsertRoom(roomDb);
         }
 
-        public async Task HandleJoinRoom(IClient client, string message)
+        public async Task HandleJoinRoom(Client client, string message)
         {
             var parts = message.Split(' ');
             if (parts.Length < 3)
@@ -132,7 +132,7 @@ namespace Server.Services.RoomAndChats.Rooms
             await SendMessageToRoom(ConstMasseges.ServerConst, _messageFormatter.ClientJoinedRoom(roomName, client.Username), roomName);
         }
 
-        public async Task HandleDeleteRoom(string message, IClient client)
+        public async Task HandleDeleteRoom(string message, Client client)
         {
             var parts = message.Split(' ');
             var roomName = parts[1];
@@ -154,7 +154,7 @@ namespace Server.Services.RoomAndChats.Rooms
             }
         }
 
-        public async Task LeaveRoom(IClient client)
+        public async Task LeaveRoom(Client client)
         {
             await SendMessageToRoom(ConstMasseges.ServerConst, _messageFormatter.ClientLeftRoom(client.RoomName, client.Username), client.RoomName);
             _chatServer.rooms.FirstOrDefault(r => r.Name == client.RoomName)?.RemoveClientFromRoom(client);
@@ -163,7 +163,7 @@ namespace Server.Services.RoomAndChats.Rooms
             await SendMessageToRoom(ConstMasseges.ServerConst, _messageFormatter.ClientJoinedRoom(client.RoomName, client.Username), client.RoomName);
         }
 
-        public async Task HandleInviteRoom(IClient client, string message)
+        public async Task HandleInviteRoom(Client client, string message)
         {
             var parts = message.Split(' ');
             if (parts.Length < 3)
@@ -193,7 +193,7 @@ namespace Server.Services.RoomAndChats.Rooms
             }
         }
 
-        public async Task PrintRooms(IClient client)
+        public async Task PrintRooms(Client client)
         {
             var message = _messageFormatter.GenerateRoomListMessage(_chatServer.rooms, client.Username);
             await _chatServer.ServerPrivateMessage(client, message);

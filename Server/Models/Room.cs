@@ -1,5 +1,5 @@
 ﻿using Server.Interfaces;
-
+using Server.Models;
 namespace Server.Models
 {
     public class Room : IRoom
@@ -7,7 +7,7 @@ namespace Server.Models
         public string Name { get; set; }
         public string Password { get; set; }
 
-        public List<IClient> Members { get; private set; }
+        public List<Client> Members { get; private set; }
 
         public List<string> Messages { get; set; }
 
@@ -15,23 +15,23 @@ namespace Server.Models
         {
             Password = "";
             Name = name;
-            Members = new List<IClient>();
+            Members = new List<Client>();
             Messages = new List<string>();
         }
         public Room(string name, string password)
         {
             Password = password;
             Name = name;
-            Members = new List<IClient>();
+            Members = new List<Client>();
             Messages = new List<string>();
         }
 
-        public void AddClientToRoom(IClient client)
+        public void AddClientToRoom(Client client)
         {
             Members.Add(client);
         }
 
-        public void RemoveClientFromRoom(IClient client)
+        public void RemoveClientFromRoom(Client client)
         {
             Members.Remove(client);
         }

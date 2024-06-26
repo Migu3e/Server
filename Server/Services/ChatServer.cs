@@ -19,8 +19,8 @@ namespace Server.Services
             _roomServices = roomServices;
             _privateChatHandler = privateChatHandler;
             _messageFormatter = new MessageFormatter();
-            clients = new List<IClient>();
-            rooms = new List<IRoom>();
+            clients = new List<Client>();
+            rooms = new List<Room>();
         }
 
         private ICleintHandler _cleintHandler;
@@ -31,16 +31,16 @@ namespace Server.Services
 
         public ChatServer()
         {
-            clients = new List<IClient>();
-            rooms = new List<IRoom>();
+            clients = new List<Client>();
+            rooms = new List<Room>();
             _roomServices = new RoomServices(this);
             _messageFormatter = new MessageFormatter();
             _privateChatHandler = new PrivateChatHandler(this,_roomServices);
             _cleintHandler = new ClientHandler.ClientHandler(this,_roomServices,_privateChatHandler);
         }
 
-        public List<IClient> clients { get; set; }
-        public List<IRoom> rooms { get; set; }
+        public List<Client> clients { get; set; }
+        public List<Room> rooms { get; set; }
 
         public async Task StartAsync()
         {
@@ -54,7 +54,7 @@ namespace Server.Services
             server.Listen();
             Console.WriteLine(ConstMasseges.PortListening);
 
-            IRoom defaultRoom = new Room(ConstMasseges.DefaultRoom);
+            Room defaultRoom = new Room(ConstMasseges.DefaultRoom);
             rooms.Add(defaultRoom);
 
 
@@ -65,7 +65,7 @@ namespace Server.Services
                 var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
                 var username = Encoding.UTF8.GetString(buffer, 0, received).Trim();
 
-                IClient client = new Models.Client(handler, username, defaultRoom.Name);
+                Client client = new Models.Client(handler, username, defaultRoom.Name);
                 defaultRoom.AddClientToRoom(client);
                 clients.Add(client);
                 await _cleintHandler.UpdatedClientList(client);
@@ -77,7 +77,7 @@ namespace Server.Services
 
         }
 
-        public async Task ServerPrivateMessage(IClient client, string message)
+        public async Task ServerPrivateMessage(Client client, string message)
         {
 
             var response = _messageFormatter.Response(ConstMasseges.ServerConst, message);
@@ -85,14 +85,14 @@ namespace Server.Services
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
         
-        public async Task SendPrivateMessage(IClient client, string message)
+        public async Task SendPrivateMessage(Client client, string message)
         {
 
             var response = _messageFormatter.Response("", message);
             var responseByte = Encoding.UTF8.GetBytes(response);    
             await client.ClientSocket.SendAsync(responseByte, SocketFlags.None);
         }
-        public async Task LoadMessages(IClient client, string message)
+        public async Task LoadMessages(Client client, string message)
         {
 
 
@@ -102,7 +102,7 @@ namespace Server.Services
 
 
 
-        public async Task PrintToAll(IClient client,string massege)
+        public async Task PrintToAll(Client client,string massege)
         {
             foreach (var member in clients)
             {

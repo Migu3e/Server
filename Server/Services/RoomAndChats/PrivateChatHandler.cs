@@ -1,6 +1,7 @@
 using Server.Const;
 using Server.Interfaces;
 using Server.Interfaces.RoomsAndChats;
+using Server.Models;
 
 namespace Server.Services.RoomAndChats
 {
@@ -19,7 +20,7 @@ namespace Server.Services.RoomAndChats
             _privateChatHelper = new PrivateChatHelper(_chatServer, _roomServices, _messageFormatter);
         }
         
-        public async Task HandleJoinPrivateRoom(IClient client, string message)
+        public async Task HandleJoinPrivateRoom(Client client, string message)
         {
             var parts = message.Split(' ');
             if (parts.Length < 2)

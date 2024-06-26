@@ -4,6 +4,7 @@ using Server.Const;
 using Server.Interfaces;
 using Server.Interfaces.ClientHandler;
 using Server.Interfaces.RoomsAndChats;
+using Server.Models;
 using Server.MongoDB;
 
 namespace Server.Services.ClientHandler;
@@ -26,7 +27,7 @@ public class ClientHandler : ICleintHandler
     private IClientHandlerHelper _clientHandlerHelper;
 
     
-    public async Task HandleClient(IClient client)
+    public async Task HandleClient(Client client)
 {
     Socket handler = client.ClientSocket;
     while (true)
@@ -47,7 +48,7 @@ public class ClientHandler : ICleintHandler
 
 } 
 
-    public async Task HandleMessage(IClient client, string username, string message)
+    public async Task HandleMessage(Client client, string username, string message)
 {
     if (ConstCheckOperations.IsCommand(message))
     {
@@ -80,7 +81,7 @@ public class ClientHandler : ICleintHandler
 
 
 
-    public async Task HandleLogout(IClient client, string username)
+    public async Task HandleLogout(Client client, string username)
     {
         await _chatServer.ServerPrivateMessage(client,ConstMasseges.DisconnectedMassege);
         await _roomServices.SendMessageToRoom(username, ConstMasseges.LeftChat, client.RoomName);
@@ -91,7 +92,7 @@ public class ClientHandler : ICleintHandler
     }
 
 
-    public async Task SendClientList(IClient client)
+    public async Task SendClientList(Client client)
     {
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
         string listOfOnlineClients = _messageFormatter.ClientListMessage(onlineClients, client.Username);
@@ -100,7 +101,7 @@ public class ClientHandler : ICleintHandler
 
     
     
-    public async Task SendAllClientList(IClient client)
+    public async Task SendAllClientList(Client client)
     {
         var clientsCollection = MongoDBRoomHelper.GetCollection<ClientDB>(ConstMasseges.CollectionDataClient);
         var allClients = await clientsCollection.Find(_ => true).ToListAsync();
@@ -113,7 +114,7 @@ public class ClientHandler : ICleintHandler
 
 
 
-    public async Task UpdatedClientList(IClient client)
+    public async Task UpdatedClientList(Client client)
     {
         var onlineClients = _chatServer.clients.Select(c => c.Username).ToList();
         string listOfOnlineClients = _messageFormatter.UpdatedClientListMessage(onlineClients, client.Username);

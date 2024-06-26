@@ -1,15 +1,17 @@
-﻿namespace Server.Interfaces
+﻿using Server.Models;
+
+namespace Server.Interfaces
 {
     public interface IChatServer
     {
-
-        List<IClient> clients { get; set; }
-        List<IRoom> rooms { get; set; }
+        
+        public List<Client> clients { get; set; }
+        public List<Room> rooms { get; set; }
         Task StartAsync();
         
-        Task SendPrivateMessage(IClient client, string message);
-        Task ServerPrivateMessage(IClient client, string message);
-        Task PrintToAll(IClient client, string massege);
-        Task LoadMessages(IClient client, string message);
+        Task SendPrivateMessage(Client client, string message);
+        Task ServerPrivateMessage(Client client, string message);
+        Task PrintToAll(Client client, string massege);
+        Task LoadMessages(Client client, string message);
     }
 }
